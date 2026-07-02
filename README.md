@@ -16,13 +16,19 @@ websocket service so you never run a websocket daemon or edit any config.
 1. Install + enable **`flarum/realtime`** and **this extension**.
 2. Paste your Chirp **key** (from your linkrobins.com dashboard → Realtime) into
    the one field on the Chirp settings page.
-3. Done. Chirp exchanges the key for your connection config and writes it into
-   flarum/realtime for you (`js-client`, `php-client`, `app-key`/`secret`) —
-   pointed at `wss://{you}.chirp.linkrobins.com`. **You never open the Realtime
-   extension's settings.**
+3. Done. Chirp exchanges the key for your connection config and writes
+   flarum/realtime's `websocket` block into your forum's `config.php`
+   (`js-client`, `php-client`, `app-key`/`secret`) — pointed at
+   `wss://{you}.chirp.linkrobins.com`. **You never open the Realtime extension's
+   settings.**
 
 Leave the key blank to disconnect. Outgrow the managed service? It's open
 source — point flarum/realtime at your own Reverb any time.
+
+> **Requirement:** your forum's `config.php` must be writable by the web server
+> (it is on a standard Flarum install). Chirp writes the connection there because
+> that's where flarum/realtime reads it — the change takes effect immediately, no
+> restart. If `config.php` is locked down, Chirp tells you in the settings page.
 
 ## Why Chirp over raw Pusher
 - **Flat, predictable pricing** — from $49/**year** (Pusher's entry is $49/**month**), unlimited messages.

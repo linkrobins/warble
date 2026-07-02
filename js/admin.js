@@ -25,6 +25,9 @@ app.initializers.add('linkrobins-chirp', () => {
     if (!isRealtimeEnabled()) {
       cls = 'Alert Alert--error';
       text = t('need_realtime');
+    } else if (app.data.settings['linkrobins-chirp.config-write-failed']) {
+      cls = 'Alert Alert--error';
+      text = t('write_failed');
     } else if (app.data.settings['linkrobins-chirp.connected']) {
       cls = 'Alert Alert--success';
       text = t('connected');

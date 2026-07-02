@@ -10,3 +10,7 @@ linkrobins-chirp:
     need_realtime: >
       Chirp needs the "Realtime" extension. Install and enable flarum/realtime,
       then paste your Chirp key below — Chirp does the rest.
+    write_failed: >
+      Chirp couldn't save the connection to your forum's config.php — it isn't
+      writable by the web server. Make config.php writable (or ask your host),
+      then save your key again.
