@@ -20,6 +20,13 @@ use Illuminate\Contracts\Container\Container;
  *
  * Only wired when flarum-realtime is enabled (Conditional in extend.php), so the
  * RealtimeSettings reference here is always safe.
+ *
+ * KNOWN LIMITATION (verified 2026-07-02): this container-level override does NOT
+ * reliably reach flarum/realtime's ForumAttributes (the browser boot payload) —
+ * realtime is fundamentally config.php-driven (Settings::defaults() reads
+ * config('websocket.*')). The reliable fix is to write the websocket.* block
+ * into the forum's config.php on setup-token save (+ a restart to pick it up).
+ * TODO: rework ExchangeTokenOnSave to write config.php instead of DB settings.
  */
 class RealtimeConfigProvider extends AbstractServiceProvider
 {
@@ -50,8 +57,6 @@ class RealtimeConfigProvider extends AbstractServiceProvider
                     'php-client-timeout' => 5,
                 ]);
             }
-
-            @error_log('[chirp] SINGLETON built key=' . ($key ? substr($key, 0, 6) : 'null') . ' host=' . ($host ?: 'null') . "\n", 3, '/tmp/chirp2.log');
 
             return $settings;
         });
