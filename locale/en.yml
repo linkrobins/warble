@@ -1,0 +1,12 @@
+linkrobins-chirp:
+  admin:
+    key_label: Chirp key
+    key_help: >
+      Paste the key from your linkrobins.com dashboard → Realtime. That's it —
+      Chirp configures the Realtime extension for you automatically. Leave it
+      blank to disconnect.
+    paste_key: Paste your Chirp key below to turn on realtime. Get it from your linkrobins.com dashboard → Realtime.
+    connected: ✓ Connected — realtime is live on your forum.
+    need_realtime: >
+      Chirp needs the "Realtime" extension. Install and enable flarum/realtime,
+      then paste your Chirp key below — Chirp does the rest.

@@ -1,0 +1,31 @@
+{
+    "name": "linkrobins/flarum-chirp",
+    "description": "Chirp — hosted realtime for Flarum. Points flarum/realtime at the managed Chirp websocket service with one key.",
+    "keywords": ["flarum", "realtime", "websocket", "chirp"],
+    "type": "flarum-extension",
+    "license": "MIT",
+    "require": {
+        "flarum/core": "^2.0"
+    },
+    "suggest": {
+        "flarum/realtime": "Required for realtime to work — Chirp configures flarum/realtime to use the hosted Chirp service."
+    },
+    "autoload": {
+        "psr-4": {
+            "LinkRobins\\Chirp\\": "src/"
+        }
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "Chirp — Realtime for Flarum",
+            "icon": {
+                "name": "fas fa-bolt",
+                "backgroundColor": "#1ec3d6",
+                "color": "#fff"
+            },
+            "optional-dependencies": [
+                "flarum-realtime"
+            ]
+        }
+    }
+}

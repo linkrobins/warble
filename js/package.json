@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "name": "@linkrobins/flarum-chirp",
+  "prettier": "@flarum/prettier-config",
+  "scripts": {
+    "build": "webpack --mode production"
+  },
+  "devDependencies": {
+    "flarum-webpack-config": "^3.0.0",
+    "mithril": "^2.2.2",
+    "webpack": "^5.90.0",
+    "webpack-cli": "^5.1.4"
+  }
+}

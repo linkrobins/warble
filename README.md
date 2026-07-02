@@ -6,15 +6,23 @@ built for Flarum: live discussions, typing indicators, and presence over
 WebSockets, without running your own socket server or wrestling with Pusher
 clusters and message caps.
 
-> **Status: pre-release / work in progress.** This extension is a fork of
-> `flarum/realtime` with one-field setup. Not yet published to Packagist.
+> **Status: pre-release / work in progress.** Not yet published to Packagist.
 
 ## How it works
-1. Install the extension.
-2. Paste your Chirp **key** in the settings — the extension resolves the endpoint
-   and the rest of the config automatically. No host, port, cluster, or secret to
-   hand-enter.
-3. Your forum goes realtime, served from `wss://{you}.chirp.linkrobins.com`.
+Chirp is a thin **companion to `flarum/realtime`** — realtime does all the work
+(live discussions, typing, presence); Chirp just points it at the managed Chirp
+websocket service so you never run a websocket daemon or edit any config.
+
+1. Install + enable **`flarum/realtime`** and **this extension**.
+2. Paste your Chirp **key** (from your linkrobins.com dashboard → Realtime) into
+   the one field on the Chirp settings page.
+3. Done. Chirp exchanges the key for your connection config and writes it into
+   flarum/realtime for you (`js-client`, `php-client`, `app-key`/`secret`) —
+   pointed at `wss://{you}.chirp.linkrobins.com`. **You never open the Realtime
+   extension's settings.**
+
+Leave the key blank to disconnect. Outgrow the managed service? It's open
+source — point flarum/realtime at your own Reverb any time.
 
 ## Why Chirp over raw Pusher
 - **Flat, predictable pricing** — from $49/**year** (Pusher's entry is $49/**month**), unlimited messages.

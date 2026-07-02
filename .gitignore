@@ -1,7 +1,8 @@
 /vendor
-/node_modules
-/js/dist
+js/node_modules
+js/dist/*.map
+dist-typings
 composer.lock
-package-lock.json
+js/package-lock.json
 .DS_Store
 *.log
