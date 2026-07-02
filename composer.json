@@ -20,8 +20,8 @@
             "title": "Chirp — Realtime for Flarum",
             "icon": {
                 "name": "fas fa-bolt",
-                "backgroundColor": "#1ec3d6",
-                "color": "#fff"
+                "color": "#07adcc",
+                "backgroundColor": "#1a2535"
             },
             "optional-dependencies": [
                 "flarum-realtime"
