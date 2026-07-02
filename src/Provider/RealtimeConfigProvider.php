@@ -33,13 +33,13 @@ class RealtimeConfigProvider extends AbstractServiceProvider
             $secret = $repo->get('linkrobins-chirp.app-secret');
             $host   = $repo->get('linkrobins-chirp.host');
 
-            error_log('[chirp] provider fired key=' . ($key ? substr($key, 0, 6) : 'null') . ' host=' . ($host ?: 'null') . ' secret=' . ($secret ? 'yes' : 'no'));
+            @error_log('[chirp] provider fired key=' . ($key ? substr($key, 0, 6) : 'null') . ' host=' . ($host ?: 'null') . ' secret=' . ($secret ? 'yes' : 'no') . "\n", 3, '/var/www/html/storage/logs/chirp-debug.log');
 
             // Not connected yet → leave realtime on its own defaults.
             if (!$key || !$secret || !$host) {
                 return;
             }
-            error_log('[chirp] injecting Chirp config into realtime host=' . $host);
+            @error_log('[chirp] INJECTING host=' . $host . "\n", 3, '/var/www/html/storage/logs/chirp-debug.log');
 
             $settings->use([
                 'app-key'          => $key,
