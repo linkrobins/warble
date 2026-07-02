@@ -51,6 +51,8 @@ class RealtimeConfigProvider extends AbstractServiceProvider
                 ]);
             }
 
+            @error_log('[chirp] SINGLETON built key=' . ($key ? substr($key, 0, 6) : 'null') . ' host=' . ($host ?: 'null') . "\n", 3, '/tmp/chirp2.log');
+
             return $settings;
         });
     }
