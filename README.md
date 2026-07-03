@@ -6,14 +6,22 @@ built for Flarum: live discussions, typing indicators, and presence over
 WebSockets, without running your own socket server or wrestling with Pusher
 clusters and message caps.
 
-> **Status: pre-release / work in progress.** Not yet published to Packagist.
+## Install
+
+```bash
+composer require linkrobins/flarum-warble
+```
+
+`flarum/realtime` is installed automatically as a dependency. Then enable
+**Realtime** and **Warble** in your admin panel.
 
 ## How it works
 Warble is a thin **companion to `flarum/realtime`** — realtime does all the work
 (live discussions, typing, presence); Warble just points it at the managed Warble
 websocket service so you never run a websocket daemon or edit any config.
 
-1. Install + enable **`flarum/realtime`** and **this extension**.
+1. `composer require linkrobins/flarum-warble`, then enable **Realtime** and
+   **Warble** in the admin panel.
 2. Paste your Warble **key** (from your linkrobins.com dashboard → Warble) into
    the one field on the Warble settings page.
 3. Done. Warble exchanges the key for your connection config and writes
