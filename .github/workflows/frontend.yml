@@ -1,0 +1,30 @@
+name: Frontend
+
+# Builds the admin JS bundle from source and fails if webpack errors or emits
+# nothing. When prettier/typings scripts are added, switch to
+# flarum/framework's REUSABLE_frontend.yml@2.x.
+
+on: [workflow_dispatch, push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./js
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Check bundle exists
+        run: test -s dist/admin.js

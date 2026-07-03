@@ -1,5 +1,12 @@
 # Warble for Flarum
 
+[![Latest Version](https://img.shields.io/packagist/v/linkrobins/flarum-warble)](https://packagist.org/packages/linkrobins/flarum-warble)
+[![Downloads](https://img.shields.io/packagist/dt/linkrobins/flarum-warble)](https://packagist.org/packages/linkrobins/flarum-warble)
+[![License](https://img.shields.io/packagist/l/linkrobins/flarum-warble)](https://github.com/linkrobins/flarum-warble/blob/main/LICENSE)
+[![Backend](https://github.com/linkrobins/flarum-warble/actions/workflows/backend.yml/badge.svg)](https://github.com/linkrobins/flarum-warble/actions/workflows/backend.yml)
+[![Frontend](https://github.com/linkrobins/flarum-warble/actions/workflows/frontend.yml/badge.svg)](https://github.com/linkrobins/flarum-warble/actions/workflows/frontend.yml)
+[![Realtime Compatibility](https://github.com/linkrobins/flarum-warble/actions/workflows/realtime-compat.yml/badge.svg)](https://github.com/linkrobins/flarum-warble/actions/workflows/realtime-compat.yml)
+
 **Realtime for your Flarum forum — one paste, done.** `flarum-warble` connects
 your forum to [Warble](https://linkrobins.com/warble), a hosted realtime service
 built for Flarum: live discussions, typing indicators, and presence over

@@ -1,0 +1,91 @@
+name: Realtime Compatibility
+
+# Warble is a thin companion to flarum/realtime, so every realtime release is
+# a potential break. This runs daily (and on demand): it resolves the LATEST
+# flarum/realtime from Packagist, does a real Flarum install with this
+# extension, and enables both. On failure it opens ONE issue per realtime
+# version; when a later run passes again, it closes any open compat issues.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 11 * * *'
+  push:
+    paths:
+      - 'composer.json'
+      - '.github/workflows/realtime-compat.yml'
+      - '.github/scripts/realtime-compat.sh'
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: flarum_compat
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -proot"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: curl, dom, gd, json, mbstring, openssl, pdo_mysql, tokenizer, zip
+          coverage: none
+
+      - name: Run compatibility check
+        id: compat
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: '3306'
+          DB_NAME: flarum_compat
+          DB_USER: root
+          DB_PASS: root
+        run: bash .github/scripts/realtime-compat.sh
+
+      - name: Open issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.compat.outputs.realtime_version || 'unknown' }}
+        run: |
+          gh label create realtime-compat --repo "$GITHUB_REPOSITORY" \
+            --description "Automated flarum/realtime compatibility reports" \
+            --color d73a4a --force
+          TITLE="Incompatible with flarum/realtime $VERSION"
+          EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --label realtime-compat --search "\"$TITLE\" in:title" --json number --jq length)
+          if [ "$EXISTING" = "0" ]; then
+            BODY="$(printf 'The daily compatibility check failed against flarum/realtime **%s**.\n\nRun: %s/%s/actions/runs/%s\n\nStages: 1) composer resolution, 2) fresh Flarum install, 3) `extension:enable` boot. See the run log for which stage broke.' \
+              "$VERSION" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")"
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" \
+              --label realtime-compat \
+              --body "$BODY"
+          fi
+
+      - name: Close compat issues on success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.compat.outputs.realtime_version }}
+        run: |
+          gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --label realtime-compat --json number --jq '.[].number' \
+          | while read -r n; do
+              gh issue close "$n" --repo "$GITHUB_REPOSITORY" \
+                --comment "Compatibility check passing again with flarum/realtime $VERSION."
+            done
