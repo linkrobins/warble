@@ -19,6 +19,15 @@ use Flarum\Foundation\Paths;
  *
  * A container restart is NOT required: after writing, we force opcache to drop
  * the cached config.php, so the next request recompiles it from disk.
+ *
+ * CONVENTION NOTE: this class deliberately uses native PHP filesystem functions
+ * (file_put_contents/rename/chmod/opcache_invalidate) rather than a Filesystem
+ * abstraction. config.php is a LOCAL bootstrap file, and the two properties the
+ * whole design rests on — the atomic same-directory rename and the opcache
+ * invalidation of a specific compiled path — have no equivalent in the
+ * Flysystem-style abstractions (which target storage disks, not the app's own
+ * boot files). Wrapping the rest in an abstraction while keeping these raw
+ * would add indirection without portability.
  */
 class ConfigWriter
 {
