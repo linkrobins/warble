@@ -3,6 +3,7 @@
 namespace LinkRobins\Warble;
 
 use Flarum\Foundation\Paths;
+use Psr\Log\LoggerInterface;
 
 /**
  * Points flarum/realtime at the hosted Warble service by writing the
@@ -33,6 +34,7 @@ class ConfigWriter
 {
     public function __construct(
         protected Paths $paths,
+        protected LoggerInterface $log,
     ) {
     }
 
@@ -101,11 +103,13 @@ class ConfigWriter
     {
         $path = $this->path();
         if (!is_file($path) || !is_readable($path) || !is_writable($path)) {
+            $this->log->warning('Warble: config.php is not readable/writable', ['path' => $path]);
             return false;
         }
 
         $config = include $path;
         if (!is_array($config)) {
+            $this->log->warning('Warble: config.php did not return an array', ['path' => $path]);
             return false;
         }
 
@@ -115,6 +119,7 @@ class ConfigWriter
 
         $tmp = $path . '.warble-' . getmypid() . '.tmp';
         if (@file_put_contents($tmp, $php, LOCK_EX) === false) {
+            $this->log->warning('Warble: could not write temp config file', ['path' => $tmp]);
             return false;
         }
 
@@ -125,6 +130,7 @@ class ConfigWriter
         }
 
         if (!@rename($tmp, $path)) {
+            $this->log->warning('Warble: atomic rename over config.php failed', ['from' => $tmp, 'to' => $path]);
             @unlink($tmp);
             return false;
         }

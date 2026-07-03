@@ -58,8 +58,9 @@ class WarbleClient
                 return null;
             }
 
+            // NB: the endpoint also returns app_id, but nothing forum-side needs
+            // it (flarum/realtime hardcodes app id 1), so it isn't surfaced.
             return [
-                'app_id' => (string) Arr::get($data, 'app_id', ''),
                 'key'    => (string) $data['key'],
                 'secret' => (string) $data['secret'],
                 'host'   => (string) $data['host'],
