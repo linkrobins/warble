@@ -38,8 +38,10 @@ disconnect Warble and run the stock daemon on your own server any time.
   daemon — disconnect Warble and run `php flarum realtime:serve` on your own
   server; your forum keeps every realtime feature.
 
-## Open source
-The extension is MIT-licensed and free. The paid part is the **managed service**
-that runs the realtime server for you — see <https://linkrobins.com/warble>.
+## Licensing
+This extension is MIT-licensed and free. **Warble itself is a hosted service by
+Link Robins** — it is not a self-hostable product; see <https://linkrobins.com/warble>.
+If you'd rather self-host realtime, you don't need Warble at all: that's just
+`flarum/realtime` in its stock form, running its own bundled daemon.
 
 Built by [Link Robins](https://linkrobins.com).
