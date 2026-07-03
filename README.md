@@ -14,7 +14,7 @@ Warble is a thin **companion to `flarum/realtime`** — realtime does all the wo
 websocket service so you never run a websocket daemon or edit any config.
 
 1. Install + enable **`flarum/realtime`** and **this extension**.
-2. Paste your Warble **key** (from your linkrobins.com dashboard → Realtime) into
+2. Paste your Warble **key** (from your linkrobins.com dashboard → Warble) into
    the one field on the Warble settings page.
 3. Done. Warble exchanges the key for your connection config and writes
    flarum/realtime's `websocket` block into your forum's `config.php`
