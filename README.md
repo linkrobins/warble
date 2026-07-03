@@ -22,8 +22,9 @@ websocket service so you never run a websocket daemon or edit any config.
    `wss://warble-{you}.linkrobins.com`. **You never open the Realtime extension's
    settings.**
 
-Leave the key blank to disconnect. Outgrow the managed service? It's open
-source — point flarum/realtime at your own Reverb any time.
+Leave the key blank to disconnect. Outgrow the managed service? No lock-in:
+flarum/realtime ships its own websocket daemon (`php flarum realtime:serve`) —
+disconnect Warble and run the stock daemon on your own server any time.
 
 > **Requirement:** your forum's `config.php` must be writable by the web server
 > (it is on a standard Flarum install). Warble writes the connection there because
@@ -33,9 +34,9 @@ source — point flarum/realtime at your own Reverb any time.
 ## Why Warble over raw Pusher
 - **Flat, predictable pricing** — from $49/**year** (Pusher's entry is $49/**month**), unlimited messages.
 - **Flarum-native** — no Pusher account, no cluster config; one key.
-- **Outgrow it? Take it with you.** This extension is open source — point it at
-  your own self-hosted Reverb (or the public
-  [flarum-docker](https://github.com/linkrobins/flarum) stack) any time.
+- **Outgrow it? No lock-in.** `flarum/realtime` bundles its own websocket
+  daemon — disconnect Warble and run `php flarum realtime:serve` on your own
+  server; your forum keeps every realtime feature.
 
 ## Open source
 The extension is MIT-licensed and free. The paid part is the **managed service**
