@@ -19,8 +19,13 @@ websocket service so you never run a websocket daemon or edit any config.
 3. Done. Warble exchanges the key for your connection config and writes
    flarum/realtime's `websocket` block into your forum's `config.php`
    (`js-client`, `php-client`, `app-key`/`secret`) — pointed at
-   `wss://warble-{you}.linkrobins.com`. **You never open the Realtime extension's
-   settings.**
+   `wss://warble-{you}.linkrobins.com`. **The connection is handled for you** —
+   no hosts, ports, or keys to configure.
+
+Realtime's own feature settings stay yours: typing indicators, discussion-list
+typing dots, list update interval, notification toast duration, and the "view
+who is typing" permission. We encourage you to open the Realtime settings page
+and tune those to fit your forum — Warble never touches them.
 
 Leave the key blank to disconnect. Outgrow the managed service? No lock-in:
 flarum/realtime ships its own websocket daemon (`php flarum realtime:serve`) —

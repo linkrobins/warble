@@ -3,10 +3,13 @@ linkrobins-warble:
     key_label: Warble key
     key_help: >
       Paste the key from your linkrobins.com dashboard → Realtime. That's it —
-      Warble configures the Realtime extension for you automatically. Leave it
-      blank to disconnect.
+      Warble sets up the Realtime extension's connection for you automatically.
+      Leave it blank to disconnect.
     paste_key: Paste your Warble key below to turn on realtime. Get it from your linkrobins.com dashboard → Realtime.
-    connected: ✓ Connected — realtime is live on your forum.
+    connected: >
+      ✓ Connected — realtime is live on your forum. Tip: open the Realtime
+      extension's settings to tune typing indicators, discussion-list updates,
+      and notification toasts for your community.
     need_realtime: >
       Warble needs the "Realtime" extension. Install and enable flarum/realtime,
       then paste your Warble key below — Warble does the rest.
