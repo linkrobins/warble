@@ -38,9 +38,12 @@ class ExchangeTokenOnSave
         $token = trim((string) $event->settings['linkrobins-warble.setup-token']);
 
         // Cleared → disconnect (strip the Warble block from config.php).
+        // Status flags are stored as '1'/'0' STRINGS: settings values round-trip
+        // through the DB as strings (a PHP false becomes "0"), and "0" is truthy
+        // in JS — the admin banner compares === '1'.
         if ($token === '') {
             $this->config->disconnect();
-            $this->settings->set('linkrobins-warble.connected', false);
+            $this->settings->set('linkrobins-warble.connected', '0');
             $this->settings->delete('linkrobins-warble.host');
             $this->settings->delete('linkrobins-warble.config-write-failed');
             return;
@@ -48,7 +51,7 @@ class ExchangeTokenOnSave
 
         $cfg = $this->client->fetchConfig($token);
         if (!$cfg) {
-            $this->settings->set('linkrobins-warble.connected', false);
+            $this->settings->set('linkrobins-warble.connected', '0');
             return;
         }
 
@@ -64,14 +67,14 @@ class ExchangeTokenOnSave
         // admin banner can show where the forum is connected. The secret does not
         // go here; it's only in config.php.
         $this->settings->set('linkrobins-warble.host', $cfg['host']);
-        $this->settings->set('linkrobins-warble.connected', $ok);
+        $this->settings->set('linkrobins-warble.connected', $ok ? '1' : '0');
 
         if ($ok) {
             $this->settings->delete('linkrobins-warble.config-write-failed');
         } else {
             // config.php wasn't writable — the admin needs to fix perms (or paste
             // the block manually). The banner reads this flag.
-            $this->settings->set('linkrobins-warble.config-write-failed', true);
+            $this->settings->set('linkrobins-warble.config-write-failed', '1');
         }
     }
 }

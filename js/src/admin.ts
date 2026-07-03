@@ -25,13 +25,16 @@ app.initializers.add('linkrobins-warble', () => {
     let cls = 'Alert';
     let text: m.Children;
 
+    // Status flags arrive as STRINGS from the settings table ('1'/'0' — and a
+    // legacy PHP false round-trips as "0", which is truthy in JS), so compare
+    // strictly against '1'.
     if (!isRealtimeEnabled()) {
       cls = 'Alert Alert--error';
       text = t('need_realtime');
-    } else if (app.data.settings['linkrobins-warble.config-write-failed']) {
+    } else if (app.data.settings['linkrobins-warble.config-write-failed'] === '1') {
       cls = 'Alert Alert--error';
       text = t('write_failed');
-    } else if (app.data.settings['linkrobins-warble.connected']) {
+    } else if (app.data.settings['linkrobins-warble.connected'] === '1') {
       cls = 'Alert Alert--success';
       text = t('connected');
     } else {
