@@ -1,11 +1,11 @@
 <?php
 
-namespace LinkRobins\Chirp;
+namespace LinkRobins\Warble;
 
 use Flarum\Foundation\Paths;
 
 /**
- * Points flarum/realtime at the hosted Chirp service by writing the
+ * Points flarum/realtime at the hosted Warble service by writing the
  * `websocket.*` block into the forum's config.php.
  *
  * WHY config.php and not DB settings / a container binding: flarum/realtime
@@ -33,7 +33,7 @@ class ConfigWriter
     }
 
     /**
-     * Write the Chirp connection into config.php. Merges into any existing
+     * Write the Warble connection into config.php. Merges into any existing
      * `websocket` block (so a self-hosted daemon's server-host/server-port are
      * left intact) and only overrides the client-facing keys. Returns true on a
      * successful write.
@@ -60,7 +60,7 @@ class ConfigWriter
     }
 
     /**
-     * Remove the Chirp overrides (admin cleared the setup key). Realtime then
+     * Remove the Warble overrides (admin cleared the setup key). Realtime then
      * falls back to its own config-defaults.
      */
     public function disconnect(): bool
@@ -104,7 +104,7 @@ class ConfigWriter
 
         $php = '<?php return ' . var_export($config, true) . ';' . PHP_EOL;
 
-        $tmp = $path . '.chirp-' . getmypid() . '.tmp';
+        $tmp = $path . '.warble-' . getmypid() . '.tmp';
         if (@file_put_contents($tmp, $php, LOCK_EX) === false) {
             return false;
         }

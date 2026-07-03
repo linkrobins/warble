@@ -1,11 +1,11 @@
 import app from 'flarum/admin/app';
 import m from 'mithril';
 
-// Chirp admin: dead-simple, one field. The owner pastes their Chirp key and
+// Warble admin: dead-simple, one field. The owner pastes their Warble key and
 // everything (all of flarum/realtime's connection config) is set up for them —
 // they never open the Realtime extension's settings. A plain-language status
 // banner tells a no-experience user exactly what to do next.
-app.initializers.add('linkrobins-chirp', () => {
+app.initializers.add('linkrobins-warble', () => {
   const isRealtimeEnabled = () => {
     try {
       if (app.extensionManager && typeof app.extensionManager.isEnabled === 'function') {
@@ -18,17 +18,17 @@ app.initializers.add('linkrobins-chirp', () => {
   };
 
   const banner = () => {
-    const t = (k) => app.translator.trans('linkrobins-chirp.admin.' + k);
+    const t = (k) => app.translator.trans('linkrobins-warble.admin.' + k);
     let cls = 'Alert';
     let text;
 
     if (!isRealtimeEnabled()) {
       cls = 'Alert Alert--error';
       text = t('need_realtime');
-    } else if (app.data.settings['linkrobins-chirp.config-write-failed']) {
+    } else if (app.data.settings['linkrobins-warble.config-write-failed']) {
       cls = 'Alert Alert--error';
       text = t('write_failed');
-    } else if (app.data.settings['linkrobins-chirp.connected']) {
+    } else if (app.data.settings['linkrobins-warble.connected']) {
       cls = 'Alert Alert--success';
       text = t('connected');
     } else {
@@ -39,12 +39,12 @@ app.initializers.add('linkrobins-chirp', () => {
   };
 
   app.registry
-    .for('linkrobins-chirp')
+    .for('linkrobins-warble')
     .registerSetting(banner, 100)
     .registerSetting({
-      setting: 'linkrobins-chirp.setup-token',
-      label: app.translator.trans('linkrobins-chirp.admin.key_label'),
-      help: app.translator.trans('linkrobins-chirp.admin.key_help'),
+      setting: 'linkrobins-warble.setup-token',
+      label: app.translator.trans('linkrobins-warble.admin.key_label'),
+      help: app.translator.trans('linkrobins-warble.admin.key_help'),
       type: 'text',
     });
 });

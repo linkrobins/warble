@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "@linkrobins/flarum-chirp",
+  "name": "@linkrobins/flarum-warble",
   "prettier": "@flarum/prettier-config",
   "scripts": {
     "build": "webpack --mode production"

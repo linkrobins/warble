@@ -1,16 +1,16 @@
-linkrobins-chirp:
+linkrobins-warble:
   admin:
-    key_label: Chirp key
+    key_label: Warble key
     key_help: >
       Paste the key from your linkrobins.com dashboard → Realtime. That's it —
-      Chirp configures the Realtime extension for you automatically. Leave it
+      Warble configures the Realtime extension for you automatically. Leave it
       blank to disconnect.
-    paste_key: Paste your Chirp key below to turn on realtime. Get it from your linkrobins.com dashboard → Realtime.
+    paste_key: Paste your Warble key below to turn on realtime. Get it from your linkrobins.com dashboard → Realtime.
     connected: ✓ Connected — realtime is live on your forum.
     need_realtime: >
-      Chirp needs the "Realtime" extension. Install and enable flarum/realtime,
-      then paste your Chirp key below — Chirp does the rest.
+      Warble needs the "Realtime" extension. Install and enable flarum/realtime,
+      then paste your Warble key below — Warble does the rest.
     write_failed: >
-      Chirp couldn't save the connection to your forum's config.php — it isn't
+      Warble couldn't save the connection to your forum's config.php — it isn't
       writable by the web server. Make config.php writable (or ask your host),
       then save your key again.

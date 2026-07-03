@@ -1,18 +1,18 @@
 <?php
 
-namespace LinkRobins\Chirp;
+namespace LinkRobins\Warble;
 
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Support\Arr;
 use Psr\Log\LoggerInterface;
 
 /**
- * Exchanges the customer's Chirp setup key for connection config, by POSTing it
- * to the Chirp service (srvup) /chirp/config endpoint. The setup key is the auth
+ * Exchanges the customer's Warble setup key for connection config, by POSTing it
+ * to the Warble service (srvup) /warble/config endpoint. The setup key is the auth
  * (a per-app secret), so this is a single authenticated call. Returns
  * ['app_id','key','secret','host','port','scheme'] or null on any failure.
  */
-class ChirpClient
+class WarbleClient
 {
     public function __construct(
         protected SettingsRepositoryInterface $settings,
@@ -27,10 +27,10 @@ class ChirpClient
             return null;
         }
 
-        $base = rtrim((string) ($this->settings->get('linkrobins-chirp.service-url') ?: 'https://linkrobins.com'), '/');
+        $base = rtrim((string) ($this->settings->get('linkrobins-warble.service-url') ?: 'https://linkrobins.com'), '/');
 
         try {
-            $ch = curl_init($base . '/chirp/config');
+            $ch = curl_init($base . '/warble/config');
             curl_setopt_array($ch, [
                 CURLOPT_POST           => true,
                 CURLOPT_POSTFIELDS     => http_build_query(['token' => $token]),
@@ -43,7 +43,7 @@ class ChirpClient
             curl_close($ch);
 
             if ($status !== 200 || !$body) {
-                $this->log->warning('Chirp: config exchange failed', ['status' => $status]);
+                $this->log->warning('Warble: config exchange failed', ['status' => $status]);
                 return null;
             }
 
@@ -61,7 +61,7 @@ class ChirpClient
                 'scheme' => (string) Arr::get($data, 'scheme', 'https'),
             ];
         } catch (\Throwable $e) {
-            $this->log->warning('Chirp: config exchange threw', ['error' => $e->getMessage()]);
+            $this->log->warning('Warble: config exchange threw', ['error' => $e->getMessage()]);
             return null;
         }
     }

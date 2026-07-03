@@ -1,7 +1,7 @@
 {
-    "name": "linkrobins/flarum-chirp",
-    "description": "Chirp — hosted realtime for Flarum. Installs + configures flarum/realtime to use the managed Chirp websocket service with one key.",
-    "keywords": ["flarum", "realtime", "websocket", "chirp"],
+    "name": "linkrobins/flarum-warble",
+    "description": "Warble — hosted realtime for Flarum. Installs + configures flarum/realtime to use the managed Warble websocket service with one key.",
+    "keywords": ["flarum", "realtime", "websocket", "warble"],
     "type": "flarum-extension",
     "license": "MIT",
     "require": {
@@ -10,14 +10,14 @@
     },
     "autoload": {
         "psr-4": {
-            "LinkRobins\\Chirp\\": "src/"
+            "LinkRobins\\Warble\\": "src/"
         }
     },
     "minimum-stability": "beta",
     "prefer-stable": true,
     "extra": {
         "flarum-extension": {
-            "title": "Link Robins Chirp",
+            "title": "Link Robins Warble",
             "icon": {
                 "name": "fas fa-bolt",
                 "color": "#07adcc",

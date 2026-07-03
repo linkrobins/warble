@@ -1,14 +1,14 @@
 <?php
 
-namespace LinkRobins\Chirp\Listener;
+namespace LinkRobins\Warble\Listener;
 
 use Flarum\Settings\Event\Saved;
 use Flarum\Settings\SettingsRepositoryInterface;
-use LinkRobins\Chirp\ChirpClient;
-use LinkRobins\Chirp\ConfigWriter;
+use LinkRobins\Warble\WarbleClient;
+use LinkRobins\Warble\ConfigWriter;
 
 /**
- * When the admin saves the Chirp setup key, exchange it for connection config
+ * When the admin saves the Warble setup key, exchange it for connection config
  * and write flarum/realtime's `websocket.*` block into config.php (via
  * ConfigWriter). This is the ONLY setup step — the owner never touches
  * flarum/realtime's own settings, and never runs a websocket daemon.
@@ -23,7 +23,7 @@ class ExchangeTokenOnSave
 {
     public function __construct(
         protected SettingsRepositoryInterface $settings,
-        protected ChirpClient $client,
+        protected WarbleClient $client,
         protected ConfigWriter $config,
     ) {
     }
@@ -31,24 +31,24 @@ class ExchangeTokenOnSave
     public function handle(Saved $event): void
     {
         // Only react when THIS save touched the setup token.
-        if (!array_key_exists('linkrobins-chirp.setup-token', $event->settings)) {
+        if (!array_key_exists('linkrobins-warble.setup-token', $event->settings)) {
             return;
         }
 
-        $token = trim((string) $event->settings['linkrobins-chirp.setup-token']);
+        $token = trim((string) $event->settings['linkrobins-warble.setup-token']);
 
-        // Cleared → disconnect (strip the Chirp block from config.php).
+        // Cleared → disconnect (strip the Warble block from config.php).
         if ($token === '') {
             $this->config->disconnect();
-            $this->settings->set('linkrobins-chirp.connected', false);
-            $this->settings->delete('linkrobins-chirp.host');
-            $this->settings->delete('linkrobins-chirp.config-write-failed');
+            $this->settings->set('linkrobins-warble.connected', false);
+            $this->settings->delete('linkrobins-warble.host');
+            $this->settings->delete('linkrobins-warble.config-write-failed');
             return;
         }
 
         $cfg = $this->client->fetchConfig($token);
         if (!$cfg) {
-            $this->settings->set('linkrobins-chirp.connected', false);
+            $this->settings->set('linkrobins-warble.connected', false);
             return;
         }
 
@@ -63,15 +63,15 @@ class ExchangeTokenOnSave
         // host is a public wss endpoint (not secret) — keep it in settings so the
         // admin banner can show where the forum is connected. The secret does not
         // go here; it's only in config.php.
-        $this->settings->set('linkrobins-chirp.host', $cfg['host']);
-        $this->settings->set('linkrobins-chirp.connected', $ok);
+        $this->settings->set('linkrobins-warble.host', $cfg['host']);
+        $this->settings->set('linkrobins-warble.connected', $ok);
 
         if ($ok) {
-            $this->settings->delete('linkrobins-chirp.config-write-failed');
+            $this->settings->delete('linkrobins-warble.config-write-failed');
         } else {
             // config.php wasn't writable — the admin needs to fix perms (or paste
             // the block manually). The banner reads this flag.
-            $this->settings->set('linkrobins-chirp.config-write-failed', true);
+            $this->settings->set('linkrobins-warble.config-write-failed', true);
         }
     }
 }
