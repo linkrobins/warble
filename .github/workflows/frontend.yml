@@ -1,30 +1,19 @@
 name: Frontend
 
-# Builds the admin JS bundle from source and fails if webpack errors or emits
-# nothing. When prettier/typings scripts are added, switch to
-# flarum/framework's REUSABLE_frontend.yml@2.x.
-
 on: [workflow_dispatch, push, pull_request]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./js
+  run:
+    uses: flarum/framework/.github/workflows/REUSABLE_frontend.yml@2.x
+    with:
+      enable_bundlewatch: false
+      enable_prettier: true
+      enable_typescript: false
 
-    steps:
-      - uses: actions/checkout@v4
+      frontend_directory: ./js
+      backend_directory: .
+      js_package_manager: npm
+      main_git_branch: main
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build
-        run: npm run build
-
-      - name: Check bundle exists
-        run: test -s dist/admin.js
+    secrets:
+      bundlewatch_github_token: ${{ secrets.BUNDLEWATCH_GITHUB_TOKEN }}

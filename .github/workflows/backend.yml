@@ -1,28 +1,12 @@
 name: Backend
 
-# Slim on purpose: the extension has no PHPUnit suite yet, so this validates
-# composer.json and lints every PHP file across supported PHP versions. When a
-# test suite lands, switch to flarum/framework's REUSABLE_backend.yml@2.x.
-
 on: [workflow_dispatch, push, pull_request]
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php: ['8.3', '8.4', '8.5']
+  run:
+    uses: flarum/framework/.github/workflows/REUSABLE_backend.yml@2.x
+    with:
+      enable_backend_testing: true
+      enable_phpstan: true
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          coverage: none
-
-      - name: Validate composer.json
-        run: composer validate --strict
-
-      - name: Lint PHP
-        run: find src extend.php -name '*.php' -print0 | xargs -0 -n1 -P4 php -l
+      backend_directory: .
