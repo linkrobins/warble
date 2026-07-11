@@ -20,12 +20,19 @@
 use Flarum\Extend;
 use Flarum\Settings\Event\Saved;
 use LinkRobins\Warble\Listener\ExchangeTokenOnSave;
+use LinkRobins\Warble\Provider\RealtimeBroadcastProvider;
 
 return [
     (new Extend\Frontend('admin'))
         ->js(__DIR__ . '/js/dist/admin.js'),
 
     new Extend\Locales(__DIR__ . '/locale'),
+
+    // Broadcast a LIGHT discussion payload (no full post stream) so realtime
+    // stays under the server's request limit and is cheap enough to run inline
+    // on the stock `sync` queue — no worker/redis/cron needed. See the provider.
+    (new Extend\ServiceProvider())
+        ->register(RealtimeBroadcastProvider::class),
 
     // Default the service URL; the setup token + resolved creds are written at
     // runtime (never serialized to the forum — they're admin/server-only).
