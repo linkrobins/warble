@@ -19,12 +19,26 @@
 
 use Flarum\Extend;
 use Flarum\Settings\Event\Saved;
+use LinkRobins\Warble\Frontend\FallbackScripts;
 use LinkRobins\Warble\Listener\ExchangeTokenOnSave;
+use LinkRobins\Warble\Middleware\HealAdminAssets;
 use LinkRobins\Warble\Provider\RealtimeBroadcastProvider;
 
 return [
+    // The settings panel, plus server-rendered inline fallbacks that still
+    // work when the compiled admin bundle is stale or broken (the "This
+    // extension has no configuration" support cases): they detect that
+    // Warble's module never registered, explain why in plain language, and
+    // offer the one-click rebuild.
     (new Extend\Frontend('admin'))
-        ->js(__DIR__ . '/js/dist/admin.js'),
+        ->js(__DIR__ . '/js/dist/admin.js')
+        ->content(FallbackScripts::class),
+
+    // Self-heal: if the served admin bundle provably predates Warble being
+    // enabled (core's post-enable asset flush failed on this host), flush it
+    // so this same page load recompiles it. No SSH, no user action.
+    (new Extend\Middleware('admin'))
+        ->add(HealAdminAssets::class),
 
     new Extend\Locales(__DIR__ . '/locale'),
 

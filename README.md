@@ -51,6 +51,21 @@ disconnect Warble and run the stock daemon on your own server any time.
 > that's where flarum/realtime reads it — the change takes effect immediately, no
 > restart. If `config.php` is locked down, Warble tells you in the settings page.
 
+## Troubleshooting: the settings page says "This extension has no configuration"
+
+That page means your forum is serving an outdated compiled assets build, one
+made before Warble was enabled, so the key field literally isn't in the
+JavaScript your browser receives. This happens on some shared hosts when
+Flarum's post-enable cache flush fails; reinstalling, purging, or clearing your
+browser cache won't fix it, because the stale build lives on the server.
+
+Warble now repairs this by itself: it checks the served build on admin page
+loads and rebuilds it when it predates Warble. If it can't (or another
+extension's script crashes the page before Warble loads), a red banner appears
+at the bottom of the admin panel explaining exactly what's wrong in plain
+language, with a one-click fix where possible. No SSH needed. If the banner
+says the assets folder isn't writable, that part is for your hosting provider.
+
 ## Why Warble over raw Pusher
 - **Flat, predictable pricing** — from $49/**year** (Pusher's entry is $49/**month**), unlimited messages.
 - **Flarum-native** — no Pusher account, no cluster config; one key.
