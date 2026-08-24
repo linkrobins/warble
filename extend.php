@@ -34,6 +34,12 @@ return [
         ->js(__DIR__ . '/js/dist/admin.js')
         ->content(FallbackScripts::class),
 
+    // Restores the typist's name in typing events on realtime >= 2.0.0-rc.6,
+    // whose client stopped sending identity (its bundled websocket server
+    // injects it; Warble, a Pusher-protocol relay, cannot). See js/src/forum.ts.
+    (new Extend\Frontend('forum'))
+        ->js(__DIR__ . '/js/dist/forum.js'),
+
     // Self-heal: if the served admin bundle provably predates Warble being
     // enabled (core's post-enable asset flush failed on this host), flush it
     // so this same page load recompiles it. No SSH, no user action.
