@@ -21,7 +21,6 @@
         "issues": "https://github.com/linkrobins/flarum-warble/issues",
         "source": "https://github.com/linkrobins/flarum-warble",
         "docs": "https://linkrobins.com/warble",
-        "forum": "https://linkrobins.com/forum",
         "email": "karl@linkrobins.com"
     },
     "require": {
