@@ -68,4 +68,25 @@ class PollingPusher extends Pusher
     {
         return new FulfilledPromise($this->triggerBatch($batch, $already_encoded));
     }
+
+    /**
+     * Occupancy, answered from poll activity instead of socket connections.
+     * realtime's push jobs ask "which private-user= channels are connected?"
+     * to decide who gets notification payloads; a channel polled within the
+     * presence window is connected in every sense that matters here.
+     *
+     * @param array<string, mixed> $params
+     */
+    public function getChannels(array $params = []): object
+    {
+        $prefix = (string) ($params['filter_by_prefix'] ?? '');
+
+        $channels = [];
+
+        foreach ($this->log->occupied($prefix) as $name) {
+            $channels[$name] = (object) [];
+        }
+
+        return (object) ['channels' => (object) $channels];
+    }
 }

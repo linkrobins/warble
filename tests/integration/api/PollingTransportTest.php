@@ -253,6 +253,28 @@ class PollingTransportTest extends TestCase
      * @test
      */
     #[Test]
+    public function polling_counts_as_being_connected()
+    {
+        // realtime's push jobs ask the Pusher client which private-user=
+        // channels are occupied to decide who gets notification payloads
+        // (Push\Jobs\Job::connectedUsers). Before anyone polls, nobody is
+        // connected; after user 2 polls, they are.
+        $pusher = $this->app()->getContainer()->make(\Pusher\Pusher::class);
+
+        $empty = $pusher->getChannels(['filter_by_prefix' => 'private-user=']);
+        $this->assertSame([], (array) $empty->channels);
+
+        $this->poll(['channels' => 'public,private-user=2'], 2);
+
+        $after = $pusher->getChannels(['filter_by_prefix' => 'private-user=']);
+        $this->assertArrayHasKey('private-user=2', (array) $after->channels);
+        $this->assertArrayNotHasKey('public', (array) $after->channels, 'prefix filter respected');
+    }
+
+    /**
+     * @test
+     */
+    #[Test]
     public function expired_rows_are_pruned()
     {
         $log = $this->app()->getContainer()->make(EventLog::class);

@@ -89,10 +89,57 @@ class EventLog
         return $query->get()->all();
     }
 
+    /** A channel with a poll this recent counts as occupied. */
+    public const PRESENCE_SECONDS = 90;
+
+    /**
+     * Record that a poller is listening on these channels. One cross-database
+     * upsert per poll; realtime's occupancy reads (via PollingPusher) answer
+     * from this, deciding for example which users get notification payloads.
+     *
+     * @param array<int, string> $channels
+     */
+    public function touch(array $channels): void
+    {
+        if ($channels === []) {
+            return;
+        }
+
+        $now = gmdate('Y-m-d H:i:s');
+
+        $this->db->table('warble_presence')->upsert(
+            array_map(fn (string $c) => ['channel' => mb_substr($c, 0, 120), 'last_seen_at' => $now], $channels),
+            ['channel'],
+            ['last_seen_at']
+        );
+    }
+
+    /**
+     * Channels with a live poller, optionally filtered by prefix — the shape
+     * of a Pusher getChannels answer.
+     *
+     * @return array<int, string>
+     */
+    public function occupied(string $prefix = ''): array
+    {
+        $query = $this->db->table('warble_presence')
+            ->where('last_seen_at', '>=', gmdate('Y-m-d H:i:s', time() - self::PRESENCE_SECONDS));
+
+        if ($prefix !== '') {
+            $query->where('channel', 'like', str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $prefix).'%');
+        }
+
+        return $query->pluck('channel')->all();
+    }
+
     public function prune(): void
     {
-        $this->db->table('warble_events')
-            ->where('created_at', '<', gmdate('Y-m-d H:i:s', time() - self::RETENTION_SECONDS))
+        $cutoff = gmdate('Y-m-d H:i:s', time() - self::RETENTION_SECONDS);
+
+        $this->db->table('warble_events')->where('created_at', '<', $cutoff)->delete();
+
+        $this->db->table('warble_presence')
+            ->where('last_seen_at', '<', gmdate('Y-m-d H:i:s', time() - self::PRESENCE_SECONDS * 2))
             ->delete();
     }
 }

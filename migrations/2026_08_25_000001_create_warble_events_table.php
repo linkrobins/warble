@@ -10,6 +10,16 @@ use Illuminate\Database\Schema\Builder;
 // it mentions from being deleted, and rows are never joined.
 return [
     'up' => function (Builder $schema) {
+        // Which channels have a live poller, so realtime's occupancy reads
+        // (getChannels: "who is connected?") have a truthful answer. One row
+        // per channel, refreshed by polls, expired by silence.
+        if (!$schema->hasTable('warble_presence')) {
+            $schema->create('warble_presence', function (Blueprint $table) {
+                $table->string('channel', 120)->primary();
+                $table->dateTime('last_seen_at')->index();
+            });
+        }
+
         if (!$schema->hasTable('warble_events')) {
             $schema->create('warble_events', function (Blueprint $table) {
                 $table->bigIncrements('id');
@@ -30,5 +40,6 @@ return [
     },
     'down' => function (Builder $schema) {
         $schema->dropIfExists('warble_events');
+        $schema->dropIfExists('warble_presence');
     },
 ];

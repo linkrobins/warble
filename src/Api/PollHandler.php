@@ -66,6 +66,10 @@ class PollHandler implements RequestHandlerInterface
 
         $interval = max(2, min(30, (int) $this->settings->get('linkrobins-warble.poll-interval', 3)));
 
+        // Every poll is a liveness signal: realtime's occupancy reads decide
+        // from this which users are connected (see PollingPusher::getChannels).
+        $this->log->touch($channels);
+
         if (!isset($params['cursor']) || !is_numeric($params['cursor'])) {
             return new JsonResponse([
                 'cursor' => $this->log->latestId(),
