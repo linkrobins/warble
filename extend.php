@@ -22,6 +22,10 @@ use Flarum\Settings\Event\Saved;
 use LinkRobins\Warble\Frontend\FallbackScripts;
 use LinkRobins\Warble\Listener\ExchangeTokenOnSave;
 use LinkRobins\Warble\Middleware\HealAdminAssets;
+use LinkRobins\Warble\Api\ClientEventHandler;
+use LinkRobins\Warble\Api\PollHandler;
+use LinkRobins\Warble\Polling\Mode;
+use LinkRobins\Warble\Provider\PollingProvider;
 use LinkRobins\Warble\Provider\RealtimeBroadcastProvider;
 
 return [
@@ -52,12 +56,37 @@ return [
     // stays under the server's request limit and is cheap enough to run inline
     // on the stock `sync` queue — no worker/redis/cron needed. See the provider.
     (new Extend\ServiceProvider())
-        ->register(RealtimeBroadcastProvider::class),
+        ->register(RealtimeBroadcastProvider::class)
+        // In polling mode, realtime's Pusher singleton becomes a row writer;
+        // in socket mode this registers nothing. See PollingProvider.
+        ->register(PollingProvider::class),
+
+    // The polling transport's wire: browsers read events by cursor and post
+    // client events (typing) here. Both 404 in socket mode.
+    (new Extend\Routes('api'))
+        ->get('/warble/poll', 'warble.poll', PollHandler::class)
+        ->post('/warble/event', 'warble.event', ClientEventHandler::class),
+
+    // Tells the forum frontend which transport runs, so it knows whether to
+    // stand the polling shim in for the socket client. Serialized for every
+    // viewer; guests poll public channels too.
+    (new Extend\ApiResource(Flarum\Api\Resource\ForumResource::class))
+        ->fields(fn () => [
+            Flarum\Api\Schema\Str::make('warbleTransport')
+                ->get(fn () => resolve(Mode::class)->polling() ? 'polling' : 'socket'),
+        ]),
 
     // Default the service URL; the setup token + resolved creds are written at
     // runtime (never serialized to the forum — they're admin/server-only).
     (new Extend\Settings())
-        ->default('linkrobins-warble.service-url', 'https://linkrobins.com'),
+        ->default('linkrobins-warble.service-url', 'https://linkrobins.com')
+        // auto: polling unless config.php carries a websocket block (a
+        // self-hosted socket, or a connection from the hosted era). Can be
+        // forced to 'polling' or 'socket'.
+        ->default('linkrobins-warble.transport', 'auto')
+        // Seconds between polls while a tab is active; hidden tabs stop
+        // entirely and idle ones stretch this out client-side.
+        ->default('linkrobins-warble.poll-interval', 3),
 
     // Exchange the pasted setup key for connection config + write config.php
     // whenever it's saved.
