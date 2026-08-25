@@ -48,6 +48,26 @@ app.initializers.add('linkrobins-warble', () => {
     .for('linkrobins-warble')
     .registerSetting(banner, 100)
     .registerSetting({
+      setting: 'linkrobins-warble.transport',
+      label: app.translator.trans('linkrobins-warble.admin.transport_label'),
+      help: app.translator.trans('linkrobins-warble.admin.transport_help'),
+      type: 'select',
+      options: {
+        auto: app.translator.trans('linkrobins-warble.admin.transport_auto'),
+        polling: app.translator.trans('linkrobins-warble.admin.transport_polling'),
+        socket: app.translator.trans('linkrobins-warble.admin.transport_socket'),
+      },
+      default: 'auto',
+    })
+    .registerSetting({
+      setting: 'linkrobins-warble.poll-interval',
+      label: app.translator.trans('linkrobins-warble.admin.poll_interval_label'),
+      help: app.translator.trans('linkrobins-warble.admin.poll_interval_help'),
+      type: 'number',
+      min: 2,
+      max: 30,
+    })
+    .registerSetting({
       setting: 'linkrobins-warble.setup-token',
       label: app.translator.trans('linkrobins-warble.admin.key_label'),
       help: app.translator.trans('linkrobins-warble.admin.key_help'),

@@ -7,35 +7,53 @@
 [![Frontend](https://github.com/linkrobins/warble/actions/workflows/frontend.yml/badge.svg)](https://github.com/linkrobins/warble/actions/workflows/frontend.yml)
 [![Realtime Compatibility](https://github.com/linkrobins/warble/actions/workflows/realtime-compat.yml/badge.svg)](https://github.com/linkrobins/warble/actions/workflows/realtime-compat.yml)
 
-**Realtime for your Flarum forum — one paste, done.** `flarum-warble` connects
-your forum to [Warble](https://linkrobins.com/warble), a hosted realtime service
-built for Flarum: live discussions, typing indicators, and presence over
-WebSockets, without running your own socket server or wrestling with Pusher
-clusters and message caps.
+**Realtime for your Flarum forum, with no server to run.** `flarum-warble`
+makes `flarum/realtime` work anywhere — live discussions, typing indicators,
+notifications — including shared hosting where a websocket server is
+impossible. Out of the box it uses **polling**: each visitor's browser asks
+your forum for updates every few seconds, so realtime needs nothing but the
+forum itself. If you can run a websocket server, point Warble at it and get
+instant delivery instead.
 
 ## Install
 
 ```bash
 composer require linkrobins/flarum-warble
+php flarum migrate
 ```
 
 `flarum/realtime` is installed automatically as a dependency. Then enable
-**Realtime** and **Warble** in your admin panel.
+**Realtime** and **Warble** in your admin panel. That's the whole setup:
+with no websocket configured, Warble runs in polling mode immediately.
 
 ## How it works
-Warble is a thin **companion to `flarum/realtime`** — realtime does all the work
-(live discussions, typing, presence); Warble just points it at the managed Warble
-websocket service so you never run a websocket daemon or edit any config.
 
-1. `composer require linkrobins/flarum-warble`, then enable **Realtime** and
-   **Warble** in the admin panel.
-2. Paste your Warble **key** (from your linkrobins.com dashboard → Warble) into
-   the one field on the Warble settings page.
-3. Done. Warble exchanges the key for your connection config and writes
-   flarum/realtime's `websocket` block into your forum's `config.php`
-   (`js-client`, `php-client`, `app-key`/`secret`) — pointed at
-   `wss://warble-{you}.linkrobins.com`. **The connection is handled for you** —
-   no hosts, ports, or keys to configure.
+Warble is a thin **companion to `flarum/realtime`** — realtime does all the
+work (live posts, typing, notifications); Warble decides how the events
+travel:
+
+- **Polling (the default, zero infrastructure).** Broadcasts are written to a
+  short-lived table in your database; each browser collects them by cursor
+  every few seconds. Hidden tabs stop polling, idle tabs slow down, and
+  every wait is jittered so tabs never stampede. Typing stays private the
+  right way: who-is-typing names are decided on your server per reader, so a
+  member who hides their online status is anonymous to everyone not
+  permitted to see through it.
+- **Websocket (bring your own, instant).** Add a `websocket` block to your
+  `config.php` pointing at any Pusher-protocol server you run — [Laravel
+  Reverb](https://reverb.laravel.com) or soketi both work — and Warble steps
+  aside apart from keeping typing names working (realtime 2.0.0-rc.6 only
+  sends them through its own bundled server; Warble restores them for
+  relays).
+
+The transport is chosen automatically and can be forced either way on the
+Warble settings page.
+
+Expect polling to be a few seconds behind rather than instant, and to add a
+small request per visitor per interval — fine for small and mid-size
+communities, which is exactly who can't run socket servers. A busy forum
+should graduate to a websocket. Index-page typing dots (who is typing on the
+discussion list) are a socket-only nicety and stay quiet in polling mode.
 
 Realtime's own feature settings stay yours: typing indicators, discussion-list
 typing dots, list update interval, notification toast duration, and the "view
@@ -66,17 +84,20 @@ at the bottom of the admin panel explaining exactly what's wrong in plain
 language, with a one-click fix where possible. No SSH needed. If the banner
 says the assets folder isn't writable, that part is for your hosting provider.
 
-## Why Warble over raw Pusher
-- **Flat, predictable pricing** — from $49/**year** (Pusher's entry is $49/**month**), unlimited messages.
-- **Flarum-native** — no Pusher account, no cluster config; one key.
-- **Outgrow it? No lock-in.** `flarum/realtime` bundles its own websocket
-  daemon — disconnect Warble and run `php flarum realtime:serve` on your own
-  server; your forum keeps every realtime feature.
+## Choosing a transport
+- **Polling** — zero infrastructure, works on any hosting, a few seconds
+  behind. The default when no websocket is configured.
+- **Your own websocket** — instant. Any Pusher-protocol server works
+  (Reverb, soketi); add its details under `websocket` in `config.php`.
+- **`flarum/realtime`'s bundled daemon** — also instant, no Warble involved:
+  run `php flarum realtime:serve` where you can keep a process alive.
+
+Forums connected to the retired hosted Warble service keep working unchanged:
+their written `config.php` connection is just a websocket configuration like
+any other.
 
 ## Licensing
-This extension is MIT-licensed and free. **Warble itself is a hosted service by
-Link Robins** — it is not a self-hostable product; see <https://linkrobins.com/warble>.
-If you'd rather self-host realtime, you don't need Warble at all: that's just
-`flarum/realtime` in its stock form, running its own bundled daemon.
+MIT, free, and standalone — nothing here depends on any external service.
 
-Built by [Link Robins](https://linkrobins.com).
+## Support
+- [Report a problem](https://github.com/linkrobins/warble/issues)
