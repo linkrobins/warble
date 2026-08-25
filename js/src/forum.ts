@@ -62,12 +62,23 @@ function wrapSocket(ws: any): any {
 
 app.initializers.add('linkrobins-warble', () => {
   const anyApp = app as any;
-  const polling = app.forum.attribute<string>('warbleTransport') === 'polling';
 
   let shim: PollingSocket | null = null;
 
+  // Evaluated at assignment time, not here: initializers run before 2.0
+  // builds `app.forum`, so reading the attribute now would throw and the
+  // trap below would never install. By the time realtime assigns
+  // `app.websocket` (during Application.mount), the forum model exists.
+  const polling = (): boolean => {
+    try {
+      return app.forum.attribute<string>('warbleTransport') === 'polling';
+    } catch {
+      return false;
+    }
+  };
+
   const adopt = (value: any): any => {
-    if (!polling) return value ? wrapSocket(value) : value;
+    if (!polling()) return value ? wrapSocket(value) : value;
 
     if (!value) return value;
 
