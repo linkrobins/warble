@@ -52,8 +52,7 @@ Warble settings page.
 Expect polling to be a few seconds behind rather than instant, and to add a
 small request per visitor per interval — fine for small and mid-size
 communities, which is exactly who can't run socket servers. A busy forum
-should graduate to a websocket. Index-page typing dots (who is typing on the
-discussion list) are a socket-only nicety and stay quiet in polling mode.
+should graduate to a websocket.
 
 Realtime's own feature settings stay yours: typing indicators, discussion-list
 typing dots, list update interval, notification toast duration, and the "view
