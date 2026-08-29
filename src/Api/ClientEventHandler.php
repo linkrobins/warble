@@ -10,6 +10,7 @@ use Flarum\Http\RequestUtil;
 use Laminas\Diactoros\Response\EmptyResponse;
 use LinkRobins\Warble\Polling\ChannelGate;
 use LinkRobins\Warble\Polling\EventLog;
+use LinkRobins\Warble\Polling\IndexTypingFanout;
 use LinkRobins\Warble\Polling\Mode;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -33,7 +34,8 @@ class ClientEventHandler implements RequestHandlerInterface
     public function __construct(
         protected Mode $mode,
         protected EventLog $log,
-        protected ChannelGate $gate
+        protected ChannelGate $gate,
+        protected IndexTypingFanout $indexTyping
     ) {
     }
 
@@ -71,6 +73,15 @@ class ClientEventHandler implements RequestHandlerInterface
         }
 
         $this->log->write([$channel], $event, $data, $actor->id, $origin !== '' ? $origin : null);
+
+        // The list dots the bundled websocket server would fan out; polling's
+        // ingest runs inside Flarum, so the same fan-out happens here.
+        if ($event === 'client-typing' && preg_match('~^private-typing=(\d+)$~', $channel, $m)) {
+            $this->indexTyping->discussionTyping((int) $m[1]);
+        } elseif ($event === 'client-index-typing-tags' && preg_match('~^private-user=\d+$~', $channel)) {
+            $tags = is_array($data) && is_array($data['tags'] ?? null) ? $data['tags'] : [];
+            $this->indexTyping->composeTyping($actor, $tags);
+        }
 
         return new EmptyResponse(204);
     }
