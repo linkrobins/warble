@@ -86,16 +86,38 @@ export default class PollingSocket {
   private cursor: number | null = null;
   private interval = 3000;
   private timer: ReturnType<typeof setTimeout> | null = null;
-  private stopped = false;
+  stopped = false;
   private polling = false;
   private lastActivity = Date.now();
   /** This tab's identity, so its own client events are not echoed back. */
   private origin = Math.random().toString(36).slice(2, 14) + Math.random().toString(36).slice(2, 14);
 
   constructor() {
+    this.listen();
+    this.schedule(0);
+  }
+
+  private listen(): void {
     document.addEventListener('visibilitychange', this.onVisibility);
     ['pointerdown', 'keydown', 'scroll'].forEach((ev) => document.addEventListener(ev, this.onActivity, { passive: true }));
+  }
 
+  /**
+   * Bring a disconnected shim back to life.
+   *
+   * realtime rebuilds its client whenever it decides the connection is stale
+   * (every iOS app-switch, and on any browser once a tab has been hidden past
+   * its 65s liveness window). That path calls disconnect() on whatever is in
+   * `app.websocket` first, which used to stop this loop for good: polling
+   * never resumed until the page was reloaded. The cursor is deliberately
+   * kept, so the catch-up poll picks up exactly where the old one left off.
+   */
+  restart(): void {
+    if (!this.stopped) return;
+
+    this.stopped = false;
+    this.listen();
+    this.setState('initialized');
     this.schedule(0);
   }
 
