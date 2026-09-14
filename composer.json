@@ -1,6 +1,6 @@
 {
     "name": "linkrobins/flarum-warble",
-    "description": "Warble — hosted realtime for Flarum. Installs + configures flarum/realtime to use the managed Warble websocket service with one key.",
+    "description": "Realtime for Flarum with no server to run. Makes flarum/realtime work anywhere, including shared hosting: polling out of the box, or point it at a websocket server you run.",
     "keywords": [
         "flarum",
         "realtime",
@@ -16,11 +16,11 @@
             "homepage": "https://linkrobins.com"
         }
     ],
-    "homepage": "https://linkrobins.com/warble",
+    "homepage": "https://linkrobins.com/extensions",
     "support": {
-        "issues": "https://github.com/linkrobins/flarum-warble/issues",
-        "source": "https://github.com/linkrobins/flarum-warble",
-        "docs": "https://linkrobins.com/warble",
+        "issues": "https://github.com/linkrobins/warble/issues",
+        "source": "https://github.com/linkrobins/warble",
+        "docs": "https://github.com/linkrobins/warble#readme",
         "email": "karl@linkrobins.com"
     },
     "require": {
