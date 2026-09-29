@@ -38,7 +38,7 @@
     "prefer-stable": true,
     "extra": {
         "flarum-extension": {
-            "title": "Link Robins Warble",
+            "title": "LR Warble",
             "icon": {
                 "name": "fas fa-bolt",
                 "color": "#07adcc",
