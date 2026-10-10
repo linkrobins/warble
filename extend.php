@@ -14,6 +14,7 @@ use Flarum\Extend;
 use LinkRobins\Warble\Frontend\FallbackScripts;
 use LinkRobins\Warble\Middleware\HealAdminAssets;
 use LinkRobins\Warble\Api\ClientEventHandler;
+use LinkRobins\Warble\Api\HealthHandler;
 use LinkRobins\Warble\Api\PollHandler;
 use LinkRobins\Warble\Provider\PollingProvider;
 use LinkRobins\Warble\Provider\RealtimeBroadcastProvider;
@@ -26,6 +27,7 @@ return [
     // offer the one-click rebuild.
     (new Extend\Frontend('admin'))
         ->js(__DIR__ . '/js/dist/admin.js')
+        ->css(__DIR__ . '/less/admin.less')
         ->content(FallbackScripts::class),
 
     // Stands the polling client in for realtime's websocket. See js/src/forum.ts.
@@ -48,10 +50,11 @@ return [
         ->register(PollingProvider::class),
 
     // The polling transport's wire: browsers read events by cursor and post
-    // client events (typing) here.
+    // client events (typing) here. The health checklist is for the admin page.
     (new Extend\Routes('api'))
         ->get('/warble/poll', 'warble.poll', PollHandler::class)
-        ->post('/warble/event', 'warble.event', ClientEventHandler::class),
+        ->post('/warble/event', 'warble.event', ClientEventHandler::class)
+        ->get('/warble/health', 'warble.health', HealthHandler::class),
 
     // Seconds between polls while a tab is active; hidden tabs stop entirely
     // and idle ones stretch this out client-side.

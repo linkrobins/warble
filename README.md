@@ -30,7 +30,15 @@ Typing indicators stay private the right way: who is typing is decided on your s
 
 ## Settings
 
-The LR Warble page in your admin panel shows whether Warble is running and has one setting:
+The LR Warble page in your admin panel opens with a **Realtime health** checklist of everything Warble depends on, as your forum sees it right now:
+
+- whether the Realtime extension is enabled
+- whether browsers can reach the polling address (a firewall or security plugin can block it)
+- how your queue hands updates over, and when that needs the scheduler (cron) to be running
+- when a browser last checked for updates, and when the last update was sent
+- a leftover websocket section in `config.php` from the retired hosted service, if there is one
+
+**Check again** runs it once more. Below it is the one setting:
 
 - **Polling interval:** how often each visitor's browser asks for updates, from 2 to 30 seconds (3 by default). Lower is snappier and busier, higher is gentler on small hosting.
 
@@ -46,7 +54,7 @@ If your forum outgrows polling and you can keep a process running on your server
 
 ### New posts take minutes to appear
 
-Realtime hands every update to Flarum's queue before Warble can deliver it. On a standard install the queue is `sync`, which sends updates immediately. If your forum uses a queue that is processed by a cron job or a worker (a database or Redis queue, for example), updates wait until that queue runs, so a queue processed every 15 minutes means updates up to 15 minutes late. `php flarum info` shows your queue driver.
+The Realtime health checklist on Warble's settings page shows your queue and scheduler. Realtime hands every update to Flarum's queue before Warble can deliver it. On a standard install the queue is `sync`, which sends updates immediately. If your forum uses a queue that is processed by a cron job or a worker (a database or Redis queue, for example), updates wait until that queue runs, so a queue processed every 15 minutes means updates up to 15 minutes late. `php flarum info` shows your queue driver.
 
 ### Upgrading from the hosted Warble service
 
