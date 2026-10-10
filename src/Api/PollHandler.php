@@ -103,7 +103,12 @@ class PollHandler implements RequestHandlerInterface
             $data = $row->payload === null ? null : json_decode((string) $row->payload, true);
             $channel = (string) $row->channel;
 
-            if ($row->event === 'client-typing' && preg_match('~^private-privateMessageTyping=(\d+)$~', $channel, $m)) {
+            // realtime 2.0's conversation typing. Clients from before 2.0
+            // (flarum/messages rc.8, still on some forums) send and expect
+            // {displayName, time} instead, and take the identity path below.
+            if ($row->event === 'client-typing'
+                && preg_match('~^private-privateMessageTyping=(\d+)$~', $channel, $m)
+                && !(is_array($data) && array_key_exists('time', $data))) {
                 $delivery = $row->user_id === null ? null : $this->dialogTyping((int) $row->user_id, (int) $m[1], $channels);
 
                 if ($delivery === null) {

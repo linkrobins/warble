@@ -114,6 +114,27 @@ class DialogTypingPollingTest extends TestCase
      * @test
      */
     #[Test]
+    public function a_client_from_before_realtime_2_still_gets_the_payload_it_reads()
+    {
+        // flarum/messages rc.8 sends {displayName, discloseOnline, time} and
+        // reads displayName and time back.
+        $response = $this->send($this->request('POST', '/api/warble/event', [
+            'authenticatedAs' => 2,
+            'json' => ['channel' => 'private-privateMessageTyping=1', 'event' => 'client-typing', 'data' => ['displayName' => 'spoofed', 'discloseOnline' => true, 'time' => 1234]],
+        ]));
+        $this->assertEquals(204, $response->getStatusCode());
+
+        $events = $this->poll(3, ['private-privateMessageTyping=1']);
+
+        $this->assertCount(1, $events);
+        $this->assertSame(1234, $events[0]['data']['time']);
+        $this->assertSame('normal', $events[0]['data']['displayName'], 'named by the server, never by the client');
+    }
+
+    /**
+     * @test
+     */
+    #[Test]
     public function only_members_may_listen_or_type()
     {
         $this->assertEquals(403, $this->type(4, 1));
