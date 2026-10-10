@@ -25,8 +25,28 @@ interface Binding {
   callback: (data: unknown) => void;
 }
 
+/**
+ * pusher-js's unbind rules: by event, by callback, by both, or everything
+ * when given neither.
+ */
+function keep(b: Binding, event?: string | null, callback?: Function | null): boolean {
+  return (!!event && b.event !== event) || (!!callback && b.callback !== callback);
+}
+
+/**
+ * One subscribed channel, with the pusher-js Channel methods extensions use.
+ * realtime itself needs only bind/unbind/trigger, but flarum/messages calls
+ * unsubscribe() and Flarum Deck bind_global(), and a missing method throws
+ * in their code, not ours; so the whole public surface is here.
+ */
 class PollingChannel {
   private bindings: Binding[] = [];
+  /** pusher-js: handlers for every event on this channel, called with (event, data). */
+  private globals: ((event: string, data: unknown) => void)[] = [];
+  /** pusher-js: true once subscribed; a poll subscribes on the next request. */
+  subscribed = true;
+  subscriptionPending = false;
+  subscriptionCancelled = false;
 
   constructor(
     public name: string,
@@ -38,9 +58,41 @@ class PollingChannel {
     return this;
   }
 
-  unbind(event?: string, callback?: (data: unknown) => void): this {
-    this.bindings = this.bindings.filter((b) => (event ? b.event !== event || (callback ? b.callback !== callback : false) : false));
+  unbind(event?: string | null, callback?: Function | null): this {
+    this.bindings = this.bindings.filter((b) => keep(b, event, callback));
     return this;
+  }
+
+  /**
+   * pusher-js: every event on the channel, whatever its name. Extensions that
+   * want all of realtime's traffic bind this way (Flarum Deck does, on the
+   * public and user channels), so a shim without it throws as they start.
+   */
+  bind_global(callback: (event: string, data: unknown) => void): this {
+    this.globals.push(callback);
+    return this;
+  }
+
+  unbind_global(callback?: (event: string, data: unknown) => void): this {
+    this.globals = callback ? this.globals.filter((g) => g !== callback) : [];
+    return this;
+  }
+
+  unbind_all(): this {
+    this.bindings = [];
+    this.globals = [];
+    return this;
+  }
+
+  /** pusher-js: leave the channel. flarum/messages does this on leaving a conversation. */
+  unsubscribe(): void {
+    this.subscribed = false;
+    this.socket.unsubscribe(this.name);
+  }
+
+  /** pusher-js: (re)join; polling picks the channel up on its next request. */
+  subscribe(): void {
+    this.socket.subscribe(this.name);
   }
 
   /** A client event: POSTed, fire and forget. Pusher returns a boolean. */
@@ -50,15 +102,22 @@ class PollingChannel {
   }
 
   dispatch(event: string, data: unknown): void {
+    // One broken handler must not stop the rest.
     this.bindings.forEach((b) => {
       if (b.event === event) {
         try {
           b.callback(data);
-        } catch {
-          // One broken handler must not stop the rest.
-        }
+        } catch {}
       }
     });
+
+    this.globals.forEach((g) => {
+      try {
+        g(event, data);
+      } catch {}
+    });
+
+    this.socket.dispatchGlobal(this.name, event, data);
   }
 }
 
@@ -79,10 +138,15 @@ export default class PollingSocket {
       this.connection.bindings.push({ event, callback });
       return this.connection;
     },
-    unbind: () => this.connection,
+    unbind: (event?: string | null, callback?: Function | null) => {
+      this.connection.bindings = this.connection.bindings.filter((b) => keep(b, event, callback));
+      return this.connection;
+    },
   };
 
-  private globals: ((...args: unknown[]) => void)[] = [];
+  /** pusher-js: socket-wide handlers, for one event on any channel. */
+  private bindings: Binding[] = [];
+  private globals: ((event?: string, data?: unknown) => void)[] = [];
   private cursor: number | null = null;
   private interval = 3000;
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -122,9 +186,62 @@ export default class PollingSocket {
   }
 
   /** pusher-js: called on every incoming frame; realtime feeds liveness from it. */
-  bind_global(callback: (...args: unknown[]) => void): this {
+  bind_global(callback: (event?: string, data?: unknown) => void): this {
     this.globals.push(callback);
     return this;
+  }
+
+  unbind_global(callback?: Function | null): this {
+    this.globals = callback ? this.globals.filter((g) => g !== callback) : [];
+    return this;
+  }
+
+  /** pusher-js: one event, whichever channel it arrives on. */
+  bind(event: string, callback: (data: unknown) => void): this {
+    this.bindings.push({ event, callback });
+    return this;
+  }
+
+  unbind(event?: string | null, callback?: Function | null): this {
+    this.bindings = this.bindings.filter((b) => keep(b, event, callback));
+    return this;
+  }
+
+  unbind_all(): this {
+    this.bindings = [];
+    this.globals = [];
+    return this;
+  }
+
+  /** pusher-js: a subscribed channel by name. */
+  channel(name: string): PollingChannel | undefined {
+    return this.channels.channels[name];
+  }
+
+  allChannels(): PollingChannel[] {
+    return Object.values(this.channels.channels);
+  }
+
+  /** pusher-js: reconnect after disconnect(). */
+  connect(): void {
+    this.restart();
+  }
+
+  /** An event on one channel, handed on to the socket-wide handlers. */
+  dispatchGlobal(channel: string, event: string, data: unknown): void {
+    this.bindings.forEach((b) => {
+      if (b.event === event) {
+        try {
+          b.callback(data);
+        } catch {}
+      }
+    });
+
+    this.globals.forEach((g) => {
+      try {
+        g(event, data);
+      } catch {}
+    });
   }
 
   subscribe(name: string): PollingChannel {
@@ -139,6 +256,10 @@ export default class PollingSocket {
   }
 
   unsubscribe(name: string): void {
+    const channel = this.channels.channels[name];
+
+    if (channel) channel.subscribed = false;
+
     delete this.channels.channels[name];
   }
 
@@ -213,9 +334,11 @@ export default class PollingSocket {
       this.interval = Math.max(2000, (data.interval || 3) * 1000);
 
       // Every successful poll is a frame: feeds realtime's liveness clock.
+      // Named like the keep-alive a socket sends, so a handler that reads the
+      // event name gets one, and can skip it as it would on a socket.
       this.globals.forEach((g) => {
         try {
-          g();
+          g('pusher:pong', {});
         } catch {}
       });
 
