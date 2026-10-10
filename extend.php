@@ -55,9 +55,4 @@ return [
         ->get('/warble/poll', 'warble.poll', PollHandler::class)
         ->post('/warble/event', 'warble.event', ClientEventHandler::class)
         ->get('/warble/health', 'warble.health', HealthHandler::class),
-
-    // Seconds between polls while a tab is active; hidden tabs stop entirely
-    // and idle ones stretch this out client-side.
-    (new Extend\Settings())
-        ->default('linkrobins-warble.poll-interval', 3),
 ];

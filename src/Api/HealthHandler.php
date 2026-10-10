@@ -14,6 +14,7 @@ use Flarum\Http\RequestUtil;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Database\ConnectionInterface;
 use Laminas\Diactoros\Response\JsonResponse;
+use LinkRobins\Warble\Polling\AutoInterval;
 use LinkRobins\Warble\Polling\EventLog;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -38,7 +39,8 @@ class HealthHandler implements RequestHandlerInterface
         protected ApplicationInfoProvider $info,
         protected Cache $cache,
         protected ConnectionInterface $db,
-        protected Config $config
+        protected Config $config,
+        protected AutoInterval $autoInterval
     ) {
     }
 
@@ -50,6 +52,7 @@ class HealthHandler implements RequestHandlerInterface
             $this->realtime(),
             ...$this->queueAndScheduler(),
             $this->polling(),
+            $this->interval(),
             $this->updates(),
             ...$this->leftoverWebsocket(),
         ]]);
@@ -107,6 +110,28 @@ class HealthHandler implements RequestHandlerInterface
         return $last
             ? $this->check('polling_seen', 'ok', ['at' => Carbon::parse($last)->toIso8601String()])
             : $this->check('polling_quiet', 'info', ['minutes' => intdiv(EventLog::RETENTION_SECONDS, 60)]);
+    }
+
+    /**
+     * What the automatic interval chose, and the measurements behind it.
+     *
+     * @return array{id: string, status: string, params?: array<string, string|int>}
+     */
+    protected function interval(): array
+    {
+        $seconds = $this->autoInterval->current();
+        $stats = $this->autoInterval->stats();
+
+        if ($stats['polls'] === 0) {
+            return $this->check('interval_waiting', 'info', ['seconds' => $seconds]);
+        }
+
+        return $this->check('interval_auto', 'ok', [
+            'seconds' => $seconds,
+            'load' => (string) max(0.1, round(100 * $stats['busy_seconds'] / $stats['span_seconds'], 1)),
+            'polls' => (int) round($stats['polls'] / ($stats['span_seconds'] / 60)),
+            'ms' => (int) round(1000 * $stats['busy_seconds'] / $stats['polls']),
+        ]);
     }
 
     /** @return array{id: string, status: string, params?: array<string, string|int>} */

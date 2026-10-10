@@ -16,12 +16,8 @@ linkrobins-warble:
       scheduler_active: "The scheduler (cron) is running; it last ran {at}."
       polling_seen: "A visitor's browser last checked for updates {at}."
       polling_quiet: "No visitor's browser has checked for updates in the last {minutes} minutes. Open the forum in another tab and check again."
+      interval_auto: "Visitors' browsers check for updates every {seconds} seconds, chosen automatically. Over the last few minutes polling kept about {load}% of one server process busy ({polls} checks a minute, {ms} ms each). Warble slows down by itself when your host is busy. For instant updates, run Realtime with its own websocket server instead of Warble."
+      interval_waiting: "Visitors' browsers check for updates every {seconds} seconds. Warble adjusts this automatically once visitors are browsing, based on how much polling costs your host."
       updates_seen: "The last update was sent {at}."
       updates_quiet: "No updates were sent in the last {minutes} minutes. Post a reply in another tab and check again."
       websocket_leftover: "config.php still has a websocket section, probably from the retired hosted Warble service. Warble ignores it. You can remove it."
-    poll_interval_label: Polling interval (seconds)
-    poll_interval_help: >
-      How often each visitor's browser asks for updates. Lower is snappier and
-      busier; higher is gentler on small hosting. Hidden tabs stop polling
-      entirely, and tabs left idle for a few minutes check five times less
-      often.

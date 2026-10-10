@@ -30,17 +30,20 @@ Typing indicators stay private the right way: who is typing is decided on your s
 
 ## Settings
 
-The LR Warble page in your admin panel opens with a **Realtime health** checklist of everything Warble depends on, as your forum sees it right now:
+There are none. Warble has no key, no server address and no interval to set.
+
+**The polling interval is automatic.** Warble measures how long its polls take on your host and how many there are, and picks how often browsers check: every 3 seconds on a quiet forum, stretching up to 30 seconds when polling would otherwise keep your server too busy. It slows down at once when your host is struggling and speeds back up gradually when there is room. If you need updates faster than polling can safely give on your host, run Realtime with its own websocket server instead of Warble.
+
+The LR Warble page in your admin panel shows a **Realtime health** checklist of everything Warble depends on, as your forum sees it right now:
 
 - whether the Realtime extension is enabled
 - whether browsers can reach the polling address (a firewall or security plugin can block it)
 - how your queue hands updates over, and when that needs the scheduler (cron) to be running
+- the interval Warble picked, with the measurements behind it
 - when a browser last checked for updates, and when the last update was sent
 - a leftover websocket section in `config.php` from the retired hosted service, if there is one
 
-**Check again** runs it once more. Below it is the one setting:
-
-- **Polling interval:** how often each visitor's browser asks for updates, from 2 to 30 seconds (3 by default). Lower is snappier and busier, higher is gentler on small hosting.
+**Check again** runs it once more.
 
 Realtime's own options stay on the Realtime extension's page: typing indicators, discussion-list typing dots, list update interval, notification toast duration, and who may see who is typing. Warble never changes them.
 

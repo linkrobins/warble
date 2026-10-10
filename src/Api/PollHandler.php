@@ -7,7 +7,7 @@
 namespace LinkRobins\Warble\Api;
 
 use Flarum\Http\RequestUtil;
-use Flarum\Settings\SettingsRepositoryInterface;
+use LinkRobins\Warble\Polling\AutoInterval;
 use Flarum\User\User;
 use Laminas\Diactoros\Response\JsonResponse;
 use LinkRobins\Warble\Polling\ChannelGate;
@@ -44,12 +44,25 @@ class PollHandler implements RequestHandlerInterface
     public function __construct(
         protected EventLog $log,
         protected ChannelGate $gate,
-        protected SettingsRepositoryInterface $settings,
+        protected AutoInterval $autoInterval,
         protected TypingActivityFeed $typingActivity
     ) {
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        $started = (float) ($request->getServerParams()['REQUEST_TIME_FLOAT'] ?? microtime(true));
+
+        $response = $this->poll($request);
+
+        // The whole request, framework boot included: that is what each poll
+        // costs the host, and what the interval is chosen from.
+        $this->autoInterval->record(microtime(true) - $started);
+
+        return $response;
+    }
+
+    protected function poll(ServerRequestInterface $request): ResponseInterface
     {
         $actor = RequestUtil::getActor($request);
 
@@ -69,7 +82,7 @@ class PollHandler implements RequestHandlerInterface
 
         $channels = array_values(array_filter($requested, fn (string $c) => $this->gate->allows($actor, $c)));
 
-        $interval = max(2, min(30, (int) $this->settings->get('linkrobins-warble.poll-interval', 3)));
+        $interval = $this->autoInterval->current();
 
         // Every poll is a liveness signal: realtime's occupancy reads decide
         // from this which users are connected (see PollingPusher::getChannels).
