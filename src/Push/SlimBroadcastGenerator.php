@@ -84,7 +84,7 @@ class SlimBroadcastGenerator extends Generator
                 $decoded = json_decode((string) $response->getBody(), true);
 
                 if (is_array($decoded)) {
-                    return $decoded;
+                    return $subject instanceof Post ? $this->withPost($decoded, $subject, $recipient) : $decoded;
                 }
             }
 
@@ -95,6 +95,45 @@ class SlimBroadcastGenerator extends Generator
         }
 
         return parent::__invoke($subject, $recipient, $includes);
+    }
+
+    /**
+     * Append the post an event is about, as flarum/realtime's own Generator
+     * does: clients that place it (Flarum Deck's post columns) read it from
+     * `included`. The post is fetched as the recipient, so one they can't see,
+     * such as a reply awaiting approval, means nothing is sent at all.
+     *
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>|null
+     */
+    private function withPost(array $payload, Post $post, ?User $recipient): ?array
+    {
+        $response = $this->api
+            ->withActor($recipient ?? new Guest)
+            ->get('/posts/'.$post->id);
+
+        if ($response->getStatusCode() !== 200) {
+            return null;
+        }
+
+        $decoded = json_decode((string) $response->getBody(), true);
+
+        if (! is_array($decoded) || ! isset($decoded['data'])) {
+            return $payload;
+        }
+
+        // The post goes last (clients look for it there), and the records its
+        // relationships point at come with it, without repeating any.
+        $included = [];
+
+        foreach ([...($payload['included'] ?? []), ...($decoded['included'] ?? [])] as $record) {
+            $included[$record['type'].':'.$record['id']] = $record;
+        }
+
+        unset($included['posts:'.$decoded['data']['id']]);
+        $payload['included'] = [...array_values($included), $decoded['data']];
+
+        return $payload;
     }
 
     /**
