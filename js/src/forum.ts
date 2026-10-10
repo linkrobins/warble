@@ -2,66 +2,18 @@ import app from 'flarum/forum/app';
 import PollingSocket from './forum/PollingSocket';
 
 /**
- * Warble's forum-side transport work, both modes decided by the
- * `warbleTransport` forum attribute:
+ * Warble's forum side: realtime over polling, with no socket server anywhere.
  *
- * POLLING — no socket server anywhere. flarum/realtime still constructs its
- * pusher-js client and assigns it to `app.websocket`; the property trap
- * below swallows every such assignment, disconnects the doomed socket, and
- * stands a PollingSocket in its place. realtime then wires all of its
- * channels and handlers to the shim without knowing the difference.
- * Identity in typing events is decided server-side per reader, so the
- * sender-side wrap is NOT installed in this mode.
- *
- * SOCKET — the hosted-era or bring-your-own configuration. The socket is
- * real and stays; the only intervention is the typing-identity wrap:
- * realtime 2.0.0-rc.6 stopped sending anything identifying in
- * `client-typing` events (its own bundled websocket server injects the
- * name; a Pusher-protocol relay cannot), so outgoing payloads that lack the
- * field get the sender's own name attached, rc.5-style.
+ * flarum/realtime still constructs its pusher-js client and assigns it to
+ * `app.websocket`; the property trap below swallows every such assignment,
+ * disconnects the doomed socket, and stands a PollingSocket in its place.
+ * realtime then wires all of its channels and handlers to the shim without
+ * knowing the difference. Identity in typing events is decided server-side
+ * per reader.
  */
 
-type Payload = Record<string, unknown>;
-
-function identify(event: string, data: Payload | undefined): Payload | undefined {
-  if (event !== 'client-typing' || !data || 'displayName' in data) return data;
-
-  const user = app.session.user;
-  const disclose = !!user?.preferences?.()?.discloseOnline;
-
-  return {
-    ...data,
-    displayName: disclose && user ? user.displayName() : null,
-    discloseOnline: disclose,
-  };
-}
-
-function wrapChannel(channel: any): any {
-  if (!channel || typeof channel.trigger !== 'function' || channel.__warbleIdentified) return channel;
-
-  const trigger = channel.trigger.bind(channel);
-  channel.trigger = (event: string, data?: Payload) => trigger(event, identify(event, data));
-  channel.__warbleIdentified = true;
-
-  return channel;
-}
-
-function wrapSocket(ws: any): any {
-  if (!ws || typeof ws.subscribe !== 'function' || ws.__warbleIdentified) return ws;
-
-  const subscribe = ws.subscribe.bind(ws);
-  ws.subscribe = (name: string) => wrapChannel(subscribe(name));
-  ws.__warbleIdentified = true;
-
-  if (ws.channels?.channels) {
-    Object.values(ws.channels.channels).forEach(wrapChannel);
-  }
-
-  return ws;
-}
-
 /**
- * Keep pusher-js from opening a socket that polling mode has no use for.
+ * Keep pusher-js from opening a socket that Warble has no use for.
  *
  * realtime builds its client with `new Pusher(...)`, and pusher-js connects
  * from inside that constructor, so by the time the assignment reaches the trap
@@ -75,8 +27,8 @@ function wrapSocket(ws: any): any {
  * which is alarming, repeats on every forced reconnect, and led to two reports
  * on the community thread from people whose forums were in fact working.
  *
- * Only pusher-js's own URL shape is intercepted, and only in polling mode, so
- * any other websocket on the page is left alone.
+ * Only pusher-js's own URL shape is intercepted, so any other websocket on
+ * the page is left alone.
  */
 function blockPusherSockets(): void {
   const anyWindow = window as any;
@@ -116,43 +68,15 @@ function blockPusherSockets(): void {
   anyWindow.WebSocket = Guard;
 }
 
-/**
- * The transport, read from the boot payload rather than `app.forum`, which 2.0
- * has not built yet while initializers run.
- */
-function pollingAtBoot(): boolean {
-  try {
-    const forum = (app as any).data?.resources?.find((r: any) => r.type === 'forums');
-
-    return forum?.attributes?.warbleTransport === 'polling';
-  } catch {
-    return false;
-  }
-}
-
 app.initializers.add('linkrobins-warble', () => {
   const anyApp = app as any;
 
   // Before realtime's mount runs, so its constructor finds the guard in place.
-  if (pollingAtBoot()) blockPusherSockets();
+  blockPusherSockets();
 
   let shim: PollingSocket | null = null;
 
-  // Evaluated at assignment time, not here: initializers run before 2.0
-  // builds `app.forum`, so reading the attribute now would throw and the
-  // trap below would never install. By the time realtime assigns
-  // `app.websocket` (during Application.mount), the forum model exists.
-  const polling = (): boolean => {
-    try {
-      return app.forum.attribute<string>('warbleTransport') === 'polling';
-    } catch {
-      return false;
-    }
-  };
-
   const adopt = (value: any): any => {
-    if (!polling()) return value ? wrapSocket(value) : value;
-
     if (!value) return value;
 
     // Whatever pusher-js instance realtime just built is pointed at a socket

@@ -15,10 +15,10 @@ use Illuminate\Database\ConnectionInterface;
 /**
  * Discussion-list typing dots over polling.
  *
- * In socket mode these are fanned out by realtime's bundled websocket server
+ * Without Warble these are fanned out by realtime's bundled websocket server
  * (IndexTypingPresence): a typing ping in a discussion, or compose-typing in
  * a new discussion, becomes `index-typing` events on the list channels. A
- * protocol relay can't do that, and neither could polling v1 — but polling's
+ * protocol relay can't do that, and neither could polling v1, but polling's
  * ingest runs inside Flarum, so the same fan-out can happen right here.
  *
  * The channel-resolution rules mirror IndexTypingPresence::resolveChannels

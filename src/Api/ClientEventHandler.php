@@ -11,7 +11,6 @@ use Laminas\Diactoros\Response\EmptyResponse;
 use LinkRobins\Warble\Polling\ChannelGate;
 use LinkRobins\Warble\Polling\EventLog;
 use LinkRobins\Warble\Polling\IndexTypingFanout;
-use LinkRobins\Warble\Polling\Mode;
 use LinkRobins\Warble\Polling\TypingActivityFeed;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -33,7 +32,6 @@ class ClientEventHandler implements RequestHandlerInterface
     protected const MAX_PAYLOAD_BYTES = 4096;
 
     public function __construct(
-        protected Mode $mode,
         protected EventLog $log,
         protected ChannelGate $gate,
         protected IndexTypingFanout $indexTyping,
@@ -43,10 +41,6 @@ class ClientEventHandler implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (!$this->mode->polling()) {
-            return new EmptyResponse(404);
-        }
-
         $actor = RequestUtil::getActor($request);
 
         if ($actor->isGuest()) {

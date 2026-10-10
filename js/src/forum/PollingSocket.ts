@@ -127,8 +127,8 @@ interface ConnectionBinding {
 }
 
 export default class PollingSocket {
-  /** Mirrors pusher-js's registry; realtime never reads it, but the identity
-   *  wrap for socket mode does, and keeping the same shape costs nothing. */
+  /** Mirrors pusher-js's registry; realtime never reads it, but other
+   *  extensions may, and keeping the same shape costs nothing. */
   channels = { channels: {} as Record<string, PollingChannel> };
 
   connection = {

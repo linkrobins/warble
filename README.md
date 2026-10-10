@@ -7,96 +7,72 @@
 [![Frontend](https://github.com/linkrobins/warble/actions/workflows/frontend.yml/badge.svg)](https://github.com/linkrobins/warble/actions/workflows/frontend.yml)
 [![Realtime Compatibility](https://github.com/linkrobins/warble/actions/workflows/realtime-compat.yml/badge.svg)](https://github.com/linkrobins/warble/actions/workflows/realtime-compat.yml)
 
-**Realtime for your Flarum forum, with no server to run.** `flarum-warble`
-makes `flarum/realtime` work anywhere — live discussions, typing indicators,
-notifications — including shared hosting where a websocket server is
-impossible. Out of the box it uses **polling**: each visitor's browser asks
-your forum for updates every few seconds, so realtime needs nothing but the
-forum itself. If you can run a websocket server, point Warble at it and get
-instant delivery instead.
+
+**Realtime for your Flarum forum, with no server to run.** Warble makes `flarum/realtime` work on any hosting, including shared hosting where a websocket server is impossible. New posts, typing indicators and notifications reach your visitors a few seconds after they happen, and the only thing it needs is your forum.
 
 ## Install
 
 ```bash
 composer require linkrobins/flarum-warble
 php flarum migrate
+php flarum cache:clear
 ```
 
-`flarum/realtime` is installed automatically as a dependency. Then enable
-**Realtime** and **Warble** in your admin panel. That's the whole setup:
-with no websocket configured, Warble runs in polling mode immediately.
+`flarum/realtime` is installed automatically as a dependency. Enable **Realtime** and **LR Warble** in your admin panel and you are done. There is no key to paste, no server to connect and no cron job to set up.
 
 ## How it works
 
-Warble is a thin **companion to `flarum/realtime`** — realtime does all the
-work (live posts, typing, notifications); Warble decides how the events
-travel:
+Warble is a companion to `flarum/realtime`. Realtime does all the live work: new posts, typing indicators, notifications and discussion-list updates. Warble changes only how those updates travel.
 
-- **Polling (the default, zero infrastructure).** Broadcasts are written to a
-  short-lived table in your database; each browser collects them by cursor
-  every few seconds. Hidden tabs stop polling, idle tabs slow down, and
-  every wait is jittered so tabs never stampede. Typing stays private the
-  right way: who-is-typing names are decided on your server per reader, so a
-  member who hides their online status is anonymous to everyone not
-  permitted to see through it.
-- **Websocket (bring your own, instant).** Add a `websocket` block to your
-  `config.php` pointing at any Pusher-protocol server you run — [Laravel
-  Reverb](https://reverb.laravel.com) or soketi both work — and Warble steps
-  aside apart from keeping typing names working (realtime 2.0.0-rc.6 only
-  sends them through its own bundled server; Warble restores them for
-  relays).
+Instead of a websocket, Warble uses **polling**. When something happens, the update is written to a short-lived table in your forum's database. Each visitor's browser asks your forum for new updates every few seconds and shows them. Hidden tabs stop asking entirely, tabs left idle for a few minutes ask less often, and every wait is slightly randomised so open tabs never all ask at once. Old updates are cleaned up as new ones arrive, so the table stays small with no scheduled job.
 
-The transport is chosen automatically and can be forced either way on the
-Warble settings page.
+Typing indicators stay private the right way: who is typing is decided on your server for each reader, so a member who hides their online status is never named to someone who is not allowed to see through it.
 
-Expect polling to be a few seconds behind rather than instant, and to add a
-small request per visitor per interval — fine for small and mid-size
-communities, which is exactly who can't run socket servers. A busy forum
-should graduate to a websocket.
+## Settings
 
-Realtime's own feature settings stay yours: typing indicators, discussion-list
-typing dots, list update interval, notification toast duration, and the "view
-who is typing" permission. We encourage you to open the Realtime settings page
-and tune those to fit your forum — Warble never touches them.
+There are none. Warble has no key, no server address and no interval to set.
 
-Leave the key blank to disconnect. Outgrow the managed service? No lock-in:
-flarum/realtime ships its own websocket daemon (`php flarum realtime:serve`) —
-disconnect Warble and run the stock daemon on your own server any time.
+**The polling interval is automatic.** Warble measures how long its polls take on your host and how many there are, and picks how often browsers check: every 3 seconds on a quiet forum, stretching up to 30 seconds when polling would otherwise keep your server too busy. It slows down at once when your host is struggling and speeds back up gradually when there is room. If you need updates faster than polling can safely give on your host, run Realtime with its own websocket server instead of Warble.
 
-> **Requirement:** your forum's `config.php` must be writable by the web server
-> (it is on a standard Flarum install). Warble writes the connection there because
-> that's where flarum/realtime reads it — the change takes effect immediately, no
-> restart. If `config.php` is locked down, Warble tells you in the settings page.
+The LR Warble page in your admin panel shows a **Realtime health** checklist of everything Warble depends on, as your forum sees it right now:
 
-## Troubleshooting: the settings page says "This extension has no configuration"
+- whether the Realtime extension is enabled
+- whether browsers can reach the polling address (a firewall or security plugin can block it)
+- how your queue hands updates over, and when that needs the scheduler (cron) to be running
+- the interval Warble picked, with the measurements behind it
+- when a browser last checked for updates, and when the last update was sent
+- a leftover websocket section in `config.php` from the retired hosted service, if there is one
 
-That page means your forum is serving an outdated compiled assets build, one
-made before Warble was enabled, so the key field literally isn't in the
-JavaScript your browser receives. This happens on some shared hosts when
-Flarum's post-enable cache flush fails; reinstalling, purging, or clearing your
-browser cache won't fix it, because the stale build lives on the server.
+**Check again** runs it once more.
 
-Warble now repairs this by itself: it checks the served build on admin page
-loads and rebuilds it when it predates Warble. If it can't (or another
-extension's script crashes the page before Warble loads), a red banner appears
-at the bottom of the admin panel explaining exactly what's wrong in plain
-language, with a one-click fix where possible. No SSH needed. If the banner
-says the assets folder isn't writable, that part is for your hosting provider.
+Realtime's own options stay on the Realtime extension's page: typing indicators, discussion-list typing dots, list update interval, notification toast duration, and who may see who is typing. Warble never changes them.
 
-## Choosing a transport
-- **Polling** — zero infrastructure, works on any hosting, a few seconds
-  behind. The default when no websocket is configured.
-- **Your own websocket** — instant. Any Pusher-protocol server works
-  (Reverb, soketi); add its details under `websocket` in `config.php`.
-- **`flarum/realtime`'s bundled daemon** — also instant, no Warble involved:
-  run `php flarum realtime:serve` where you can keep a process alive.
+## What to expect
 
-Forums connected to the retired hosted Warble service keep working unchanged:
-their written `config.php` connection is just a websocket configuration like
-any other.
+Updates arrive a few seconds after they happen rather than instantly, and each open tab makes one small request per interval. That suits small and mid-size communities, which are exactly the ones that cannot run a websocket server.
 
-## Licensing
-MIT, free, and standalone — nothing here depends on any external service.
+If your forum outgrows polling and you can keep a process running on your server, disable Warble and run Realtime's own websocket server instead (`php flarum realtime:serve`, see the Realtime extension's documentation). Warble only does polling: it does not connect to websocket servers, its own or anyone else's.
+
+## Troubleshooting
+
+### New posts take minutes to appear
+
+The Realtime health checklist on Warble's settings page shows your queue and scheduler. Realtime hands every update to Flarum's queue before Warble can deliver it. On a standard install the queue is `sync`, which sends updates immediately. If your forum uses a queue that is processed by a cron job or a worker (a database or Redis queue, for example), updates wait until that queue runs, so a queue processed every 15 minutes means updates up to 15 minutes late. `php flarum info` shows your queue driver.
+
+### Upgrading from the hosted Warble service
+
+The hosted service is retired. Upgrading removes its old settings, including any setup key. If your `config.php` still has a `websocket` section from that time, Warble ignores it and polls anyway. You can delete that section; it is only needed if you later switch to Realtime's own websocket server, and then it has to point at your server.
+
+### The settings page says "This extension has no configuration"
+
+That page means your forum is serving an outdated compiled build, one made before Warble was enabled. This happens on some shared hosts when Flarum's post-enable cache flush fails. Reinstalling, purging or clearing your browser cache won't fix it, because the stale build lives on the server.
+
+Warble repairs this by itself: it checks the served build on admin page loads and rebuilds it when it predates Warble. If it can't (or another extension's script crashes the page before Warble loads), a red banner appears at the bottom of the admin panel explaining what's wrong in plain language, with a one-click fix where possible. No SSH needed. If the banner says the assets folder isn't writable, that part is for your hosting provider.
+
+## License
+
+MIT, free, and standalone: nothing here depends on any external service.
 
 ## Support
+
 - [Report a problem](https://github.com/linkrobins/warble/issues)

@@ -1,10 +1,11 @@
 {
     "name": "linkrobins/flarum-warble",
-    "description": "Realtime for Flarum with no server to run. Makes flarum/realtime work anywhere, including shared hosting: polling out of the box, or point it at a websocket server you run.",
+    "description": "Realtime for Flarum with no server to run. Makes flarum/realtime work on any hosting, including shared hosting, by polling instead of a websocket.",
     "keywords": [
         "flarum",
         "realtime",
-        "websocket",
+        "polling",
+        "shared hosting",
         "warble"
     ],
     "type": "flarum-extension",
@@ -27,7 +28,7 @@
         "php": "^8.3",
         "flarum/core": "^2.0",
         "flarum/realtime": "^2.0@RC",
-        "guzzlehttp/guzzle": "^7.0"
+        "guzzlehttp/promises": "^2.0"
     },
     "autoload": {
         "psr-4": {
@@ -68,17 +69,14 @@
         "analyse:phpstan": "phpstan analyse",
         "clear-cache:phpstan": "phpstan clear-result-cache",
         "test": [
-            "@test:unit",
             "@test:integration"
         ],
-        "test:unit": "phpunit -c tests/phpunit.unit.xml",
         "test:integration": "phpunit -c tests/phpunit.integration.xml",
         "test:setup": "@php tests/integration/setup.php"
     },
     "scripts-descriptions": {
         "analyse:phpstan": "Run static analysis.",
         "test": "Runs all tests.",
-        "test:unit": "Runs all unit tests.",
         "test:integration": "Runs all integration tests.",
         "test:setup": "Sets up a database for use with integration tests. Execute this only once."
     }
