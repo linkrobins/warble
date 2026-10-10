@@ -27,6 +27,8 @@ interface Binding {
 
 class PollingChannel {
   private bindings: Binding[] = [];
+  /** pusher-js: handlers for every event on this channel, called with (event, data). */
+  private globals: ((event: string, data: unknown) => void)[] = [];
 
   constructor(
     public name: string,
@@ -43,6 +45,27 @@ class PollingChannel {
     return this;
   }
 
+  /**
+   * pusher-js: every event on the channel, whatever its name. Extensions that
+   * want all of realtime's traffic bind this way (Flarum Deck does, on the
+   * public and user channels), so a shim without it throws as they start.
+   */
+  bind_global(callback: (event: string, data: unknown) => void): this {
+    this.globals.push(callback);
+    return this;
+  }
+
+  unbind_global(callback?: (event: string, data: unknown) => void): this {
+    this.globals = callback ? this.globals.filter((g) => g !== callback) : [];
+    return this;
+  }
+
+  unbind_all(): this {
+    this.bindings = [];
+    this.globals = [];
+    return this;
+  }
+
   /** A client event: POSTed, fire and forget. Pusher returns a boolean. */
   trigger(event: string, data?: unknown): boolean {
     this.socket.post(this.name, event, data);
@@ -50,14 +73,19 @@ class PollingChannel {
   }
 
   dispatch(event: string, data: unknown): void {
+    // One broken handler must not stop the rest.
     this.bindings.forEach((b) => {
       if (b.event === event) {
         try {
           b.callback(data);
-        } catch {
-          // One broken handler must not stop the rest.
-        }
+        } catch {}
       }
+    });
+
+    this.globals.forEach((g) => {
+      try {
+        g(event, data);
+      } catch {}
     });
   }
 }
