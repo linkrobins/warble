@@ -86,7 +86,7 @@ class PollingTransportTest extends TestCase
      * @test
      */
     #[Test]
-    public function without_a_websocket_config_the_transport_is_polling_and_head_comes_back()
+    public function a_first_poll_returns_the_head_cursor_and_interval()
     {
         $first = $this->poll(['channels' => 'public']);
 
@@ -227,26 +227,19 @@ class PollingTransportTest extends TestCase
      * @test
      */
     #[Test]
-    public function forcing_socket_mode_turns_the_endpoints_off()
+    public function a_websocket_block_left_in_config_does_not_turn_polling_off()
     {
-        $this->setting('linkrobins-warble.transport', 'socket');
+        // What the retired hosted service wrote into config.php. Warble
+        // polls regardless: websockets mean running realtime without Warble.
+        $this->config('websocket', ['key' => 'hosted-era-key', 'secret' => 'x', 'app-id' => '1', 'js-client-host' => 'gone.example.com']);
 
-        $response = $this->send($this->request('GET', '/api/warble/poll?channels=public'));
+        $poll = $this->poll(['channels' => 'public']);
+        $this->assertIsInt($poll['cursor']);
 
-        $this->assertEquals(404, $response->getStatusCode());
-    }
+        $this->app()->getContainer()->make(\Pusher\Pusher::class)->trigger('public', 'probe', ['ok' => true]);
 
-    /**
-     * @test
-     */
-    #[Test]
-    public function the_forum_payload_names_the_transport()
-    {
-        $response = $this->send($this->request('GET', '/api'));
-
-        $data = json_decode($response->getBody()->getContents(), true);
-
-        $this->assertSame('polling', $data['data']['attributes']['warbleTransport']);
+        $next = $this->poll(['channels' => 'public', 'cursor' => (string) $poll['cursor']]);
+        $this->assertSame('probe', $next['events'][0]['event'] ?? null);
     }
 
     /**

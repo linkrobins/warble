@@ -13,7 +13,7 @@ use Flarum\User\User;
 /**
  * realtime 2.0's forum-wide feed of who is typing where, over polling.
  *
- * In socket mode realtime's bundled server relays every typing ping to the
+ * Without Warble, realtime's bundled server relays every typing ping to the
  * `private-typing-activity` channel (TypingActivity), for holders of
  * `flarum-realtime.view-all-typing`; Flarum Deck's typing column reads it.
  * Polling's ingest runs inside Flarum, so the same relay happens here.

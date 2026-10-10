@@ -12,7 +12,6 @@ use Flarum\User\User;
 use Laminas\Diactoros\Response\JsonResponse;
 use LinkRobins\Warble\Polling\ChannelGate;
 use LinkRobins\Warble\Polling\EventLog;
-use LinkRobins\Warble\Polling\Mode;
 use LinkRobins\Warble\Polling\TypingActivityFeed;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -43,7 +42,6 @@ class PollHandler implements RequestHandlerInterface
     public const MAX_CHANNELS = 100;
 
     public function __construct(
-        protected Mode $mode,
         protected EventLog $log,
         protected ChannelGate $gate,
         protected SettingsRepositoryInterface $settings,
@@ -53,10 +51,6 @@ class PollHandler implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (!$this->mode->polling()) {
-            return new JsonResponse(['error' => 'polling_disabled'], 404);
-        }
-
         $actor = RequestUtil::getActor($request);
 
         // getQueryParams() is only as populated as the server request was

@@ -1,10 +1,9 @@
 import app from 'flarum/admin/app';
 import m from 'mithril';
 
-// Warble admin: dead-simple, one field. The owner pastes their Warble key and
-// the whole connection (flarum/realtime's websocket config) is set up for them.
-// Realtime's own feature settings stay theirs to tune. A plain-language status
-// banner tells a no-experience user exactly what to do next.
+// Warble admin: a status line and the polling interval. Warble runs realtime
+// over polling and nothing else, so there is no key, server or transport to
+// set. Realtime's own feature settings stay on the Realtime page.
 app.initializers.add('linkrobins-warble', () => {
   const isRealtimeEnabled = (): boolean => {
     try {
@@ -22,43 +21,18 @@ app.initializers.add('linkrobins-warble', () => {
 
   const banner = (): m.Children => {
     const t = (k: string) => app.translator.trans('linkrobins-warble.admin.' + k);
-    let cls = 'Alert';
-    let text: m.Children;
+    const ready = isRealtimeEnabled();
 
-    // Status flags arrive as STRINGS from the settings table ('1'/'0' — and a
-    // legacy PHP false round-trips as "0", which is truthy in JS), so compare
-    // strictly against '1'.
-    if (!isRealtimeEnabled()) {
-      cls = 'Alert Alert--error';
-      text = t('need_realtime');
-    } else if (app.data.settings['linkrobins-warble.config-write-failed'] === '1') {
-      cls = 'Alert Alert--error';
-      text = t('write_failed');
-    } else if (app.data.settings['linkrobins-warble.connected'] === '1') {
-      cls = 'Alert Alert--success';
-      text = t('connected');
-    } else {
-      text = t('paste_key');
-    }
-
-    return m('div', { className: cls, style: 'margin-bottom:16px;' }, text);
+    return m(
+      'div',
+      { className: ready ? 'Alert Alert--success' : 'Alert Alert--error', style: 'margin-bottom:16px;' },
+      t(ready ? 'running' : 'need_realtime')
+    );
   };
 
   app.registry
     .for('linkrobins-warble')
     .registerSetting(banner, 100)
-    .registerSetting({
-      setting: 'linkrobins-warble.transport',
-      label: app.translator.trans('linkrobins-warble.admin.transport_label'),
-      help: app.translator.trans('linkrobins-warble.admin.transport_help'),
-      type: 'select',
-      options: {
-        auto: app.translator.trans('linkrobins-warble.admin.transport_auto'),
-        polling: app.translator.trans('linkrobins-warble.admin.transport_polling'),
-        socket: app.translator.trans('linkrobins-warble.admin.transport_socket'),
-      },
-      default: 'auto',
-    })
     .registerSetting({
       setting: 'linkrobins-warble.poll-interval',
       label: app.translator.trans('linkrobins-warble.admin.poll_interval_label'),
@@ -66,11 +40,5 @@ app.initializers.add('linkrobins-warble', () => {
       type: 'number',
       min: 2,
       max: 30,
-    })
-    .registerSetting({
-      setting: 'linkrobins-warble.setup-token',
-      label: app.translator.trans('linkrobins-warble.admin.key_label'),
-      help: app.translator.trans('linkrobins-warble.admin.key_help'),
-      type: 'text',
     });
 });

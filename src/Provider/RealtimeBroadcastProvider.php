@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Warble — hosted realtime for Flarum.
+ * Warble: realtime for Flarum over polling.
  */
 
 namespace LinkRobins\Warble\Provider;
