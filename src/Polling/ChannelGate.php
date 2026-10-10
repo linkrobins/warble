@@ -28,7 +28,8 @@ class ChannelGate
     protected array $memo = [];
 
     public function __construct(
-        protected SettingsRepositoryInterface $settings
+        protected SettingsRepositoryInterface $settings,
+        protected TypingActivityFeed $typingActivity
     ) {
     }
 
@@ -44,6 +45,11 @@ class ChannelGate
         // Public channels are public (asset revisions, index typing display).
         if ($channel === 'public' || $channel === 'public-index-typing') {
             return true;
+        }
+
+        // AuthController::typingActivity — the forum-wide typing feed.
+        if ($channel === TypingActivityFeed::CHANNEL) {
+            return $this->typingActivity->allows($actor);
         }
 
         // AuthController::indexTypingTag — visible tag, tags installed.

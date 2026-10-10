@@ -13,6 +13,7 @@ use Laminas\Diactoros\Response\JsonResponse;
 use LinkRobins\Warble\Polling\ChannelGate;
 use LinkRobins\Warble\Polling\EventLog;
 use LinkRobins\Warble\Polling\Mode;
+use LinkRobins\Warble\Polling\TypingActivityFeed;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -38,7 +39,8 @@ class PollHandler implements RequestHandlerInterface
         protected Mode $mode,
         protected EventLog $log,
         protected ChannelGate $gate,
-        protected SettingsRepositoryInterface $settings
+        protected SettingsRepositoryInterface $settings,
+        protected TypingActivityFeed $typingActivity
     ) {
     }
 
@@ -91,7 +93,13 @@ class PollHandler implements RequestHandlerInterface
 
             $data = $row->payload === null ? null : json_decode((string) $row->payload, true);
 
-            if ($row->user_id !== null && str_starts_with((string) $row->event, 'client-')) {
+            if ($row->channel === TypingActivityFeed::CHANNEL) {
+                $data = $row->user_id === null ? null : $this->typingActivity->forReader((array) $data, (int) $row->user_id, $actor);
+
+                if ($data === null) {
+                    continue;
+                }
+            } elseif ($row->user_id !== null && str_starts_with((string) $row->event, 'client-')) {
                 $data = $this->identify((array) $data, (int) $row->user_id, (string) $row->channel, $actor);
 
                 if ($data === null) {
