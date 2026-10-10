@@ -35,6 +35,13 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 class PollHandler implements RequestHandlerInterface
 {
+    /**
+     * At most this many channels per poll, like realtime 2.0's per-connection
+     * ceiling (max-channels-per-connection). A real client holds a handful;
+     * the cap keeps one request from asking for endless names.
+     */
+    public const MAX_CHANNELS = 100;
+
     public function __construct(
         protected Mode $mode,
         protected EventLog $log,
@@ -61,10 +68,12 @@ class PollHandler implements RequestHandlerInterface
             parse_str($request->getUri()->getQuery(), $params);
         }
 
-        $channels = array_values(array_filter(
+        $requested = array_slice(array_values(array_unique(array_filter(
             array_map('trim', explode(',', (string) ($params['channels'] ?? ''))),
-            fn (string $c) => $c !== '' && $this->gate->allows($actor, $c)
-        ));
+            fn (string $c) => $c !== ''
+        ))), 0, self::MAX_CHANNELS);
+
+        $channels = array_values(array_filter($requested, fn (string $c) => $this->gate->allows($actor, $c)));
 
         $interval = max(2, min(30, (int) $this->settings->get('linkrobins-warble.poll-interval', 3)));
 
@@ -92,8 +101,17 @@ class PollHandler implements RequestHandlerInterface
             $last = max($last, (int) $row->id);
 
             $data = $row->payload === null ? null : json_decode((string) $row->payload, true);
+            $channel = (string) $row->channel;
 
-            if ($row->channel === TypingActivityFeed::CHANNEL) {
+            if ($row->event === 'client-typing' && preg_match('~^private-privateMessageTyping=(\d+)$~', $channel, $m)) {
+                $delivery = $row->user_id === null ? null : $this->dialogTyping((int) $row->user_id, (int) $m[1], $channels);
+
+                if ($delivery === null) {
+                    continue;
+                }
+
+                [$channel, $data] = $delivery;
+            } elseif ($channel === TypingActivityFeed::CHANNEL) {
                 $data = $row->user_id === null ? null : $this->typingActivity->forReader((array) $data, (int) $row->user_id, $actor);
 
                 if ($data === null) {
@@ -108,7 +126,7 @@ class PollHandler implements RequestHandlerInterface
             }
 
             $events[] = [
-                'channel' => (string) $row->channel,
+                'channel' => $channel,
                 'event' => (string) $row->event,
                 'data' => $data,
             ];
@@ -157,6 +175,36 @@ class PollHandler implements RequestHandlerInterface
         $data['discloseOnline'] = false;
 
         return $data;
+    }
+
+    /**
+     * Typing in a private conversation, as realtime 2.0 relays it
+     * (Message::relayDialogTyping): the payload is only the typist's id,
+     * since members know each other. A typist who discloses their online
+     * status is sent on the conversation's channel; a hidden one only on the
+     * identified channel, to members allowed to see through it, and to
+     * nobody else (in a two-person conversation, "someone" names them).
+     *
+     * @param array<int, string> $channels the reader's permitted channels
+     * @return array{0: string, 1: array{userId: int}}|null
+     */
+    protected function dialogTyping(int $senderId, int $dialogId, array $channels): ?array
+    {
+        $sender = $this->sender($senderId);
+
+        if ($sender === null) {
+            return null;
+        }
+
+        $data = ['userId' => $sender->id];
+
+        if ((bool) ($sender->getPreference('discloseOnline') ?? true)) {
+            return ["private-privateMessageTyping=$dialogId", $data];
+        }
+
+        $identified = "private-privateMessageTypingIdentified=$dialogId";
+
+        return in_array($identified, $channels, true) ? [$identified, $data] : null;
     }
 
     /** @var array<int, ?User> */

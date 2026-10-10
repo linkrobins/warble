@@ -72,8 +72,12 @@ class ChannelGate
             'typing' => Discussion::whereVisibleTo($actor)->where('id', $id)->exists(),
 
             // AuthController::privateMessageTyping — dialog visibility.
-            'privateMessageTyping' => class_exists(\Flarum\Messages\Dialog::class)
-                && \Flarum\Messages\Dialog::whereVisibleTo($actor)->where('id', $id)->exists(),
+            'privateMessageTyping' => $this->dialogMember($actor, $id),
+
+            // AuthController::privateMessageTypingIdentified — members who
+            // hold core's see-through permission for hidden online status.
+            'privateMessageTypingIdentified' => $actor->hasPermission('user.viewLastSeenAt')
+                && $this->dialogMember($actor, $id),
 
             // AuthController::typingIdentified — seeing through a hidden
             // online status needs the core override permission plus the
@@ -82,6 +86,12 @@ class ChannelGate
 
             default => false,
         };
+    }
+
+    protected function dialogMember(User $actor, int $id): bool
+    {
+        return class_exists(\Flarum\Messages\Dialog::class)
+            && \Flarum\Messages\Dialog::whereVisibleTo($actor)->where('id', $id)->exists();
     }
 
     protected function typingIdentified(User $actor, int $id): bool
