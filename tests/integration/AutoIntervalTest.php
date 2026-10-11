@@ -32,8 +32,13 @@ class AutoIntervalTest extends TestCase
     /** Pretend the last few minutes held this much polling. */
     private function seed(int $polls, int $busyMs): void
     {
+        // Three minutes back, not four: the window is the last WINDOW_MINUTES (5)
+        // minutes counted from the minute of the REQUEST. Seeded at the oldest
+        // minute, the row fell out of the window whenever the clock ticked over
+        // between seeding and the request, and a busy host read as idle (a
+        // flaky failure on CI, 2026-10-11). One minute of slack survives a tick.
         $minute = intdiv(time(), 60);
-        $this->database()->table('warble_load')->insert(['minute' => $minute - 4, 'polls' => $polls, 'busy_ms' => $busyMs]);
+        $this->database()->table('warble_load')->insert(['minute' => $minute - 3, 'polls' => $polls, 'busy_ms' => $busyMs]);
     }
 
     /**
@@ -67,11 +72,13 @@ class AutoIntervalTest extends TestCase
         $this->send($this->request('GET', '/api/warble/poll?channels=public'));
         $this->send($this->request('GET', '/api/warble/poll?channels=public'));
 
-        $row = $this->database()->table('warble_load')->where('minute', intdiv(time(), 60))->first();
+        // The two polls can straddle a minute boundary, so count this minute and
+        // the one before it rather than the current minute alone.
+        $rows = $this->database()->table('warble_load')->where('minute', '>=', intdiv(time(), 60) - 1)->get();
 
-        $this->assertNotNull($row);
-        $this->assertSame(2, (int) $row->polls);
-        $this->assertGreaterThanOrEqual(0, (int) $row->busy_ms);
+        $this->assertNotEmpty($rows);
+        $this->assertSame(2, (int) $rows->sum('polls'));
+        $this->assertGreaterThanOrEqual(0, (int) $rows->sum('busy_ms'));
     }
 
     /**
@@ -80,8 +87,8 @@ class AutoIntervalTest extends TestCase
     #[Test]
     public function a_busy_host_gets_a_longer_interval_in_the_poll_response()
     {
-        // 300 polls of 600 ms each in about five minutes: polling keeps
-        // roughly 0.6 of a process busy at 3 s, so it needs about 4 s.
+        // 300 polls of 600 ms each over the last three to four minutes: polling
+        // keeps roughly 0.75-0.9 of a process busy at 3 s, so it needs 5 s or so.
         $this->seed(300, 300 * 600);
 
         $response = $this->send($this->request('GET', '/api/warble/poll?channels=public'));
