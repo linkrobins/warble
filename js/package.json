@@ -4,6 +4,7 @@
   "prettier": "@flarum/prettier-config",
   "scripts": {
     "build": "webpack --mode production",
+    "check-typings": "tsc --noEmit",
     "format": "prettier --write src",
     "format-check": "prettier --check src"
   },
