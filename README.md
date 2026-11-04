@@ -10,21 +10,33 @@
 
 **Realtime for your Flarum forum, with no server to run.** Warble makes `flarum/realtime` work on any hosting, including shared hosting where a websocket server is impossible. New posts, typing indicators and notifications reach your visitors a few seconds after they happen, and the only thing it needs is your forum.
 
+## Requirements
+
+- Flarum **2.0** or later
+- PHP **8.3** or later
+- [`flarum/realtime`](https://packagist.org/packages/flarum/realtime) 2.0, which Composer installs automatically with Warble
+
 ## Install
 
 ```bash
 composer require linkrobins/flarum-warble
+```
+
+Then toggle **Realtime** and **LR Warble** on in the admin panel's Extensions page. There is no key to paste, no server to connect and no cron job to set up.
+
+### Updating
+
+```bash
+composer update linkrobins/flarum-warble
 php flarum migrate
 php flarum cache:clear
 ```
-
-`flarum/realtime` is installed automatically as a dependency. Enable **Realtime** and **LR Warble** in your admin panel and you are done. There is no key to paste, no server to connect and no cron job to set up.
 
 ## How it works
 
 Warble is a companion to `flarum/realtime`. Realtime does all the live work: new posts, typing indicators, notifications and discussion-list updates. Warble changes only how those updates travel.
 
-Instead of a websocket, Warble uses **polling**. When something happens, the update is written to a short-lived table in your forum's database. Each visitor's browser asks your forum for new updates every few seconds and shows them. Hidden tabs stop asking entirely, tabs left idle for a few minutes ask less often, and every wait is slightly randomised so open tabs never all ask at once. Old updates are cleaned up as new ones arrive, so the table stays small with no scheduled job.
+Instead of a websocket, Warble uses **polling**. When something happens, the update is written to a short-lived table in your forum's database. Each visitor's browser asks your forum for new updates every few seconds and shows them. Hidden tabs stop asking entirely, tabs left idle for a few minutes ask less often, and every wait is slightly randomised so open tabs never all ask at once. Updates are kept for only about two minutes (and never more than a couple of hundred), and old ones are cleaned up as new ones arrive, so the table stays small with no scheduled job.
 
 Typing indicators stay private the right way: who is typing is decided on your server for each reader, so a member who hides their online status is never named to someone who is not allowed to see through it.
 
@@ -71,7 +83,7 @@ Warble repairs this by itself: it checks the served build on admin page loads an
 
 ## License
 
-MIT, free, and standalone: nothing here depends on any external service.
+MIT, free, and standalone: nothing here depends on any external service, and there is no account, key or subscription.
 
 ## Support
 
